@@ -1,0 +1,255 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+/* n8n-style custom styles */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+*::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* React Flow custom styles */
+.react-flow__node {
+    cursor: pointer;
+}
+
+.react-flow__node.selected {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+}
+
+.react-flow__handle {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid white;
+    background: #94a3b8;
+    transition: all 0.2s;
+}
+
+.react-flow__handle:hover {
+    background: #3b82f6;
+    transform: scale(1.3);
+}
+
+.react-flow__edge-path {
+    stroke-width: 2;
+    transition: stroke 0.2s;
+}
+
+.react-flow__edge.selected .react-flow__edge-path {
+    stroke: #3b82f6;
+    stroke-width: 3;
+}
+
+.react-flow__edge:hover .react-flow__edge-path {
+    stroke: #3b82f6;
+}
+
+/* Smooth drag feedback */
+.dragging {
+    opacity: 0.5;
+    cursor: grabbing !important;
+}
+
+/* Node hover effects */
+.node-card {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.node-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Pulse animation for status indicators */
+@keyframes pulse-slow {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.animate-pulse-slow {
+    animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Gradient backgrounds */
+.gradient-background {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* Connection animation */
+@keyframes dash {
+    to {
+        stroke-dashoffset: -20;
+    }
+}
+
+.react-flow__edge.animated path {
+    stroke-dasharray: 5;
+    animation: dash 0.5s linear infinite;
+}
+
+/* Panel slide animations */
+.slide-up-enter {
+    transform: translateY(100%);
+}
+
+.slide-up-enter-active {
+    transform: translateY(0);
+    transition: transform 300ms ease-out;
+}
+
+.slide-up-exit {
+    transform: translateY(0);
+}
+
+.slide-up-exit-active {
+    transform: translateY(100%);
+    transition: transform 300ms ease-in;
+}
+
+/* Smooth transitions for all interactive elements */
+button, a, select, input {
+    transition: all 0.15s ease-in-out;
+}
+
+/* Focus styles */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+/* Loading spinner */
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+/* Fade in animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Glassmorphism effect */
+.glass {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+/* Node connection preview */
+.react-flow__connectionline {
+    stroke: #3b82f6;
+    stroke-width: 2;
+    stroke-dasharray: 5, 5;
+}
+
+/* Minimap styling */
+.react-flow__minimap {
+    background-color: white;
+}
+
+.react-flow__minimap-mask {
+    fill: rgba(100, 116, 139, 0.1);
+}
+
+.react-flow__minimap-node {
+    fill: #e2e8f0;
+    stroke: none;
+}
+
+/* Controls styling */
+.react-flow__controls {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.react-flow__controls-button {
+    background: white;
+    border-bottom: 1px solid #e2e8f0;
+    transition: all 0.2s;
+}
+
+.react-flow__controls-button:hover {
+    background: #f8fafc;
+}
+
+.react-flow__controls-button svg {
+    fill: #475569;
+}
+
+.react-flow__controls-button:hover svg {
+    fill: #1e293b;
+}
+
+/* Comic-style selection box - yellow with black outline */
+.react-flow__selection {
+    background: rgba(250, 204, 21, 0.3) !important; /* yellow-400 with transparency */
+    border: 4px dashed #000 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 0 0 4px rgba(250, 204, 21, 0.5) !important;
+}
+
+.react-flow__selectionpane {
+    cursor: crosshair !important;
+}
+
+/* Make edges (wires) more visible with yellow and black outline */
+.react-flow__edge-path {
+    stroke: #facc15 !important; /* yellow-400 */
+    stroke-width: 4 !important;
+    filter: drop-shadow(0 0 2px #000) drop-shadow(0 0 1px #000);
+}
+
+.react-flow__edge.selected .react-flow__edge-path {
+    stroke: #84cc16 !important; /* lime-500 */
+    stroke-width: 5 !important;
+    filter: drop-shadow(0 0 3px #000) drop-shadow(0 0 2px #000);
+}
