@@ -24,10 +24,16 @@ class AiWorkflowController extends Controller
         $user = $request->user() ?? auth()->user() ?? User::first();
 
         if (!$user) {
+            // Create organization first if it doesn't exist
+            $organization = \App\Models\Organization::firstOrCreate(
+                ['name' => 'Default Organization'],
+                ['description' => 'Default organization for system users']
+            );
+
             $user = User::firstOrCreate(
                 ['email' => 'system@example.com'],
                 [
-                    'organization_id' => 1,
+                    'organization_id' => $organization->id,
                     'name' => 'System User',
                     'password' => bcrypt('password'),
                 ]
