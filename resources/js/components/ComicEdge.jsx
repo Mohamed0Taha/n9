@@ -14,31 +14,40 @@ function ComicEdge(props) {
     markerEnd,
   } = props;
 
+  let adjustedSourceX = sourceX;
+  let adjustedSourceY = sourceY;
   let adjustedTargetX = targetX;
   let adjustedTargetY = targetY;
 
-  // Adjust arrow tip to touch the border of the input tag/node
-  // Fine-tuned to make arrow tip exactly touch the top border line with no gap
-  // Handle + border + arrow tip = ~18px for perfect contact
-  const handleOffset = 27; // Distance to pull back so arrow tip touches border
+  // Adjust arrow to touch the connection circles
+  // Circle is 14px + 3px border = 17px radius, adjusted for arrow to touch circle edge
+  const handleOffset = 7; // Distance to pull back so arrow tip touches circle
   
+  // Adjust source (output circle)
+  if (sourcePosition === Position.Bottom) {
+    adjustedSourceY += handleOffset;
+  } else if (sourcePosition === Position.Top) {
+    adjustedSourceY -= handleOffset;
+  } else if (sourcePosition === Position.Right) {
+    adjustedSourceX += handleOffset;
+  } else if (sourcePosition === Position.Left) {
+    adjustedSourceX -= handleOffset;
+  }
+  
+  // Adjust target (input circle)
   if (targetPosition === Position.Top) {
-    // Arrow coming from top - stop at top border of node
     adjustedTargetY -= handleOffset;
   } else if (targetPosition === Position.Bottom) {
-    // Arrow coming from bottom - stop at bottom border
     adjustedTargetY += handleOffset;
   } else if (targetPosition === Position.Left) {
-    // Arrow coming from left - stop at left border
     adjustedTargetX -= handleOffset;
   } else if (targetPosition === Position.Right) {
-    // Arrow coming from right - stop at right border
     adjustedTargetX += handleOffset;
   }
 
   const [edgePath] = getBezierPath({
-    sourceX,
-    sourceY,
+    sourceX: adjustedSourceX,
+    sourceY: adjustedSourceY,
     targetX: adjustedTargetX,
     targetY: adjustedTargetY,
     sourcePosition,
