@@ -249,10 +249,10 @@ export default function App() {
                 const aggregatedData = {
                     status: bundleStatus,
                     execution_time_ms: totalExecutionTime,
-                    // Combine outputs from all bundled nodes
-                    output: bundledExecutionData.map(d => d.output).filter(Boolean),
-                    input: bundledExecutionData[0]?.input || null, // Use first node's input
-                    bundled_results: bundledExecutionData, // Store individual results
+                    // Bundle behaves like a sub-workflow: first node input, last node output
+                    input: bundledExecutionData[0]?.input || null, // First node's input
+                    output: bundledExecutionData[bundledExecutionData.length - 1]?.output || null, // Last node's output
+                    bundled_results: bundledExecutionData, // Store individual results for debugging
                 };
                 
                 setActiveNode(prev => {
