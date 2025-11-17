@@ -6,6 +6,7 @@ import ReactFlow, {
   useEdgesState,
   MarkerType,
   applyNodeChanges,
+  useReactFlow,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import N8nStyleNode from './N8nStyleNode.jsx';
@@ -254,15 +255,21 @@ function WorkflowCanvas(
       console.log('🔍 Parsed node data:', nodeData);
       console.log('🔍 ReactFlow instance:', reactFlowInstance);
 
-      if (!nodeData || !reactFlowInstance || !reactFlowBounds) {
-        console.log('❌ Missing required data:', { nodeData: !!nodeData, reactFlowInstance: !!reactFlowInstance, reactFlowBounds: !!reactFlowBounds });
+      if (!nodeData || !reactFlowBounds) {
+        console.log('❌ Missing required data:', { nodeData: !!nodeData, reactFlowBounds: !!reactFlowBounds });
         return;
       }
 
-      const position = reactFlowInstance.project({
-        x: event.clientX - reactFlowBounds.left,
-        y: event.clientY - reactFlowBounds.top,
-      });
+      // Calculate position manually if reactFlowInstance not available yet
+      const position = reactFlowInstance 
+        ? reactFlowInstance.project({
+            x: event.clientX - reactFlowBounds.left,
+            y: event.clientY - reactFlowBounds.top,
+          })
+        : {
+            x: event.clientX - reactFlowBounds.left,
+            y: event.clientY - reactFlowBounds.top,
+          };
 
       const newNode = {
         id: `${nodeData.id}-${Date.now()}`,
@@ -780,6 +787,7 @@ function WorkflowCanvas(
   }, [nodes, edges, onGraphChange]);
 
   const handleInit = useCallback((instance) => {
+    console.log('🎬 ReactFlow initialized:', instance);
     setReactFlowInstance(instance);
   }, []);
 
