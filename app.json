@@ -1,0 +1,61 @@
+{
+  "name": "n9 - Workflow Automation Platform",
+  "description": "A powerful n8n-style workflow automation platform with 100+ nodes",
+  "repository": "https://github.com/Mohamed0Taha/n9",
+  "logo": "",
+  "keywords": ["laravel", "react", "workflow", "automation", "n8n"],
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    },
+    {
+      "url": "heroku/php"
+    }
+  ],
+  "env": {
+    "APP_KEY": {
+      "description": "Laravel application key - will be generated",
+      "generator": "secret"
+    },
+    "APP_ENV": {
+      "value": "production"
+    },
+    "APP_DEBUG": {
+      "value": "false"
+    },
+    "LOG_CHANNEL": {
+      "value": "stack"
+    },
+    "DB_CONNECTION": {
+      "value": "pgsql"
+    },
+    "QUEUE_CONNECTION": {
+      "value": "database"
+    },
+    "SESSION_DRIVER": {
+      "value": "database"
+    },
+    "CACHE_DRIVER": {
+      "value": "database"
+    }
+  },
+  "addons": [
+    {
+      "plan": "heroku-postgresql:mini",
+      "as": "DATABASE"
+    }
+  ],
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "basic"
+    },
+    "worker": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  },
+  "scripts": {
+    "postdeploy": "php artisan migrate --force && php artisan config:cache && php artisan route:cache && php artisan view:cache"
+  }
+}
