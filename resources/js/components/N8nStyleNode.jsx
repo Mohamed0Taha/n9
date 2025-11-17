@@ -53,52 +53,78 @@ function N8nStyleNode({ data, selected, id, onOpenSettings }) {
   const renderHandles = () => {
     const handles = [];
 
-    // Render input handles with labels
+    // Render input handles with labels (label IS the handle)
     inputs.forEach((input, index) => {
       if (input.type === 'main') {
         const leftPos = inputs.length === 1 ? '50%' : `${(index + 1) * 100 / (inputs.length + 1)}%`;
         const inputLabel = input.label || (inputs.length > 1 ? `Input ${index + 1}` : 'INPUT');
         
         handles.push(
-          <div key={`input-wrapper-${index}`} style={{ position: 'absolute', top: -35, left: leftPos, transform: 'translateX(-50%)', pointerEvents: 'none' }}>
-            <div className="flex flex-col items-center gap-1">
-              <span className="text-[9px] font-bold bg-lime-400 px-2 py-0.5 rounded border-2 border-black text-black whitespace-nowrap" style={{ boxShadow: '1px 1px 0px #000', pointerEvents: 'none' }}>
-                {inputLabel}
-              </span>
-              <Handle
-                type="target"
-                position={Position.Top}
-                id={`input-${index}`}
-                className="w-10 h-10 !bg-lime-400 !border-3 !border-black !rounded-full hover:!w-12 hover:!h-12 transition-all cursor-crosshair"
-                style={{ position: 'relative', top: 0, left: 0, transform: 'none', boxShadow: '2px 2px 0px #000' }}
-              />
-            </div>
-          </div>
+          <Handle
+            key={`input-${index}`}
+            type="target"
+            position={Position.Top}
+            id={`input-${index}`}
+            style={{ 
+              position: 'absolute', 
+              top: -22,
+              left: leftPos, 
+              transform: 'translateX(-50%)',
+              width: 'auto',
+              height: 'auto',
+              borderRadius: '4px',
+              border: '3px solid #000',
+              boxShadow: '2px 2px 0px #000',
+              padding: '4px 8px',
+              fontSize: '10px',
+              fontWeight: 'bold',
+              backgroundColor: '#bef264',
+              color: '#000',
+              cursor: 'crosshair',
+              transition: 'all 0.2s',
+            }}
+            className="hover:scale-110 hover:!shadow-[3px_3px_0px_#000]"
+          >
+            {inputLabel}
+          </Handle>
         );
       }
     });
 
-    // Render output handles with labels
+    // Render output handles with labels (label IS the handle)
     outputs.forEach((output, index) => {
       if (output.type === 'main') {
         const leftPos = outputs.length === 1 ? '50%' : `${(index + 1) * 100 / (outputs.length + 1)}%`;
         const outputLabel = output.label || (outputs.length > 1 ? `Output ${index}` : 'OUTPUT');
         
         handles.push(
-          <div key={`output-wrapper-${index}`} style={{ position: 'absolute', bottom: -35, left: leftPos, transform: 'translateX(-50%)', pointerEvents: 'none' }}>
-            <div className="flex flex-col items-center gap-1">
-              <Handle
-                type="source"
-                position={Position.Bottom}
-                id={`output-${index}`}
-                className="w-10 h-10 !bg-cyan-400 !border-3 !border-black !rounded-full hover:!w-12 hover:!h-12 transition-all cursor-crosshair"
-                style={{ position: 'relative', bottom: 0, left: 0, transform: 'none', boxShadow: '2px 2px 0px #000' }}
-              />
-              <span className="text-[9px] font-bold bg-cyan-400 px-2 py-0.5 rounded border-2 border-black text-black whitespace-nowrap" style={{ boxShadow: '1px 1px 0px #000', pointerEvents: 'none' }}>
-                {outputLabel}
-              </span>
-            </div>
-          </div>
+          <Handle
+            key={`output-${index}`}
+            type="source"
+            position={Position.Bottom}
+            id={`output-${index}`}
+            style={{ 
+              position: 'absolute', 
+              bottom: -22,
+              left: leftPos, 
+              transform: 'translateX(-50%)',
+              width: 'auto',
+              height: 'auto',
+              borderRadius: '4px',
+              border: '3px solid #000',
+              boxShadow: '2px 2px 0px #000',
+              padding: '4px 8px',
+              fontSize: '10px',
+              fontWeight: 'bold',
+              backgroundColor: '#67e8f9',
+              color: '#000',
+              cursor: 'crosshair',
+              transition: 'all 0.2s',
+            }}
+            className="hover:scale-110 hover:!shadow-[3px_3px_0px_#000]"
+          >
+            {outputLabel}
+          </Handle>
         );
       }
     });
