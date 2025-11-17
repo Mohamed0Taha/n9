@@ -61,25 +61,7 @@ function N8nStyleNode({ data, selected, id, onOpenSettings }) {
         
         handles.push(
           <div key={`input-wrapper-${index}`} style={{ position: 'absolute', top: -38, left: leftPos, transform: 'translateX(-50%)', zIndex: 1000 }}>
-            {/* Label */}
-            <div 
-              style={{ 
-                borderRadius: '4px',
-                border: '3px solid #000',
-                boxShadow: '2px 2px 0px #000',
-                padding: '4px 8px',
-                fontSize: '10px',
-                fontWeight: 'bold',
-                backgroundColor: '#bef264',
-                color: '#000',
-                whiteSpace: 'nowrap',
-                marginBottom: '4px',
-                pointerEvents: 'none',
-              }}
-            >
-              {inputLabel}
-            </div>
-            {/* Connection circle */}
+            {/* Connection circle (on top, outer side) */}
             <Handle
               type="target"
               position={Position.Top}
@@ -96,10 +78,28 @@ function N8nStyleNode({ data, selected, id, onOpenSettings }) {
                 cursor: 'crosshair',
                 boxShadow: '2px 2px 0px #000',
                 transition: 'all 0.2s',
+                marginBottom: '4px',
                 zIndex: 1001,
               }}
               className="hover:!w-[20px] hover:!h-[20px] hover:!shadow-[3px_3px_0px_#000]"
             />
+            {/* Label (below circle) */}
+            <div 
+              style={{ 
+                borderRadius: '4px',
+                border: '3px solid #000',
+                boxShadow: '2px 2px 0px #000',
+                padding: '4px 8px',
+                fontSize: '10px',
+                fontWeight: 'bold',
+                backgroundColor: '#bef264',
+                color: '#000',
+                whiteSpace: 'nowrap',
+                pointerEvents: 'none',
+              }}
+            >
+              {inputLabel}
+            </div>
           </div>
         );
       }
@@ -113,7 +113,25 @@ function N8nStyleNode({ data, selected, id, onOpenSettings }) {
         
         handles.push(
           <div key={`output-wrapper-${index}`} style={{ position: 'absolute', bottom: -38, left: leftPos, transform: 'translateX(-50%)', zIndex: 1000 }}>
-            {/* Connection circle */}
+            {/* Label (above circle) */}
+            <div 
+              style={{ 
+                borderRadius: '4px',
+                border: '3px solid #000',
+                boxShadow: '2px 2px 0px #000',
+                padding: '4px 8px',
+                fontSize: '10px',
+                fontWeight: 'bold',
+                backgroundColor: '#67e8f9',
+                color: '#000',
+                whiteSpace: 'nowrap',
+                marginBottom: '4px',
+                pointerEvents: 'none',
+              }}
+            >
+              {outputLabel}
+            </div>
+            {/* Connection circle (on bottom, outer side) */}
             <Handle
               type="source"
               position={Position.Bottom}
@@ -130,28 +148,10 @@ function N8nStyleNode({ data, selected, id, onOpenSettings }) {
                 cursor: 'crosshair',
                 boxShadow: '2px 2px 0px #000',
                 transition: 'all 0.2s',
-                marginBottom: '4px',
                 zIndex: 1001,
               }}
               className="hover:!w-[20px] hover:!h-[20px] hover:!shadow-[3px_3px_0px_#000]"
             />
-            {/* Label */}
-            <div 
-              style={{ 
-                borderRadius: '4px',
-                border: '3px solid #000',
-                boxShadow: '2px 2px 0px #000',
-                padding: '4px 8px',
-                fontSize: '10px',
-                fontWeight: 'bold',
-                backgroundColor: '#67e8f9',
-                color: '#000',
-                whiteSpace: 'nowrap',
-                pointerEvents: 'none',
-              }}
-            >
-              {outputLabel}
-            </div>
           </div>
         );
       }
