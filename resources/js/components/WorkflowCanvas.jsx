@@ -235,17 +235,27 @@ function WorkflowCanvas(
   const onDragOver = useCallback((event) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
+    console.log('🎯 Drag over canvas');
   }, []);
 
   // Handle drop node on canvas
   const onDrop = useCallback(
     (event) => {
       event.preventDefault();
+      console.log('🎯 Drop event triggered!');
 
       const reactFlowBounds = reactFlowWrapper.current?.getBoundingClientRect();
-      const nodeData = JSON.parse(event.dataTransfer.getData('application/reactflow'));
+      console.log('📦 ReactFlow bounds:', reactFlowBounds);
+      
+      const dataString = event.dataTransfer.getData('application/reactflow');
+      console.log('📝 Raw data from drag:', dataString);
+      
+      const nodeData = dataString ? JSON.parse(dataString) : null;
+      console.log('🔍 Parsed node data:', nodeData);
+      console.log('🔍 ReactFlow instance:', reactFlowInstance);
 
       if (!nodeData || !reactFlowInstance || !reactFlowBounds) {
+        console.log('❌ Missing required data:', { nodeData: !!nodeData, reactFlowInstance: !!reactFlowInstance, reactFlowBounds: !!reactFlowBounds });
         return;
       }
 
@@ -273,11 +283,13 @@ function WorkflowCanvas(
         },
       };
 
+      console.log('✅ Adding new node:', newNode);
       setNodes((nds) => nds.concat(newNode));
 
       if (onGraphChange) {
         onGraphChange({ nodes: [...nodes, newNode], edges });
       }
+      console.log('🎉 Node added successfully!');
     },
     [reactFlowInstance, nodes, edges, onGraphChange, setNodes],
   );

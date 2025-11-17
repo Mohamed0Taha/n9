@@ -14,8 +14,10 @@ export default function NodesCarousel({ onNodeDragStart }) {
   }, [selectedCategory, searchQuery]);
 
   const handleDragStart = (event, node) => {
+    console.log('🚀 Drag started for node:', node);
     event.dataTransfer.effectAllowed = 'move';
     event.dataTransfer.setData('application/reactflow', JSON.stringify(node));
+    console.log('📦 Data set in dataTransfer');
     if (onNodeDragStart) {
       onNodeDragStart(node);
     }
