@@ -60,17 +60,17 @@ function N8nStyleNode({ data, selected, id, onOpenSettings }) {
         const inputLabel = input.label || (inputs.length > 1 ? `Input ${index + 1}` : 'INPUT');
         
         handles.push(
-          <div key={`input-wrapper-${index}`} style={{ position: 'absolute', top: -40, left: leftPos, transform: 'translateX(-50%)', pointerEvents: 'none' }}>
+          <div key={`input-wrapper-${index}`} style={{ position: 'absolute', top: -35, left: leftPos, transform: 'translateX(-50%)', pointerEvents: 'none' }}>
             <div className="flex flex-col items-center gap-1">
-              <span className="text-[10px] font-bold bg-lime-400 px-3 py-1 rounded border-2 border-black text-black whitespace-nowrap" style={{ boxShadow: '2px 2px 0px #000', pointerEvents: 'none' }}>
+              <span className="text-[9px] font-bold bg-lime-400 px-2 py-0.5 rounded border-2 border-black text-black whitespace-nowrap" style={{ boxShadow: '1px 1px 0px #000', pointerEvents: 'none' }}>
                 {inputLabel}
               </span>
               <Handle
                 type="target"
                 position={Position.Top}
                 id={`input-${index}`}
-                className="w-12 h-12 !bg-lime-400 !border-4 !border-black !rounded-full hover:!w-14 hover:!h-14 transition-all cursor-pointer"
-                style={{ position: 'relative', top: 0, left: 0, transform: 'none', boxShadow: '3px 3px 0px #000', pointerEvents: 'auto' }}
+                className="w-10 h-10 !bg-lime-400 !border-3 !border-black !rounded-full hover:!w-12 hover:!h-12 transition-all cursor-crosshair"
+                style={{ position: 'relative', top: 0, left: 0, transform: 'none', boxShadow: '2px 2px 0px #000' }}
               />
             </div>
           </div>
@@ -85,16 +85,16 @@ function N8nStyleNode({ data, selected, id, onOpenSettings }) {
         const outputLabel = output.label || (outputs.length > 1 ? `Output ${index}` : 'OUTPUT');
         
         handles.push(
-          <div key={`output-wrapper-${index}`} style={{ position: 'absolute', bottom: -40, left: leftPos, transform: 'translateX(-50%)', pointerEvents: 'none' }}>
+          <div key={`output-wrapper-${index}`} style={{ position: 'absolute', bottom: -35, left: leftPos, transform: 'translateX(-50%)', pointerEvents: 'none' }}>
             <div className="flex flex-col items-center gap-1">
               <Handle
                 type="source"
                 position={Position.Bottom}
                 id={`output-${index}`}
-                className="w-12 h-12 !bg-cyan-400 !border-4 !border-black !rounded-full hover:!w-14 hover:!h-14 transition-all cursor-pointer"
-                style={{ position: 'relative', bottom: 0, left: 0, transform: 'none', boxShadow: '3px 3px 0px #000', pointerEvents: 'auto' }}
+                className="w-10 h-10 !bg-cyan-400 !border-3 !border-black !rounded-full hover:!w-12 hover:!h-12 transition-all cursor-crosshair"
+                style={{ position: 'relative', bottom: 0, left: 0, transform: 'none', boxShadow: '2px 2px 0px #000' }}
               />
-              <span className="text-[10px] font-bold bg-cyan-400 px-3 py-1 rounded border-2 border-black text-black whitespace-nowrap" style={{ boxShadow: '2px 2px 0px #000', pointerEvents: 'none' }}>
+              <span className="text-[9px] font-bold bg-cyan-400 px-2 py-0.5 rounded border-2 border-black text-black whitespace-nowrap" style={{ boxShadow: '1px 1px 0px #000', pointerEvents: 'none' }}>
                 {outputLabel}
               </span>
             </div>
