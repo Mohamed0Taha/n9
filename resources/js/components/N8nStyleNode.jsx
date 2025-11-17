@@ -60,7 +60,7 @@ function N8nStyleNode({ data, selected, id, onOpenSettings }) {
         const inputLabel = input.label || (inputs.length > 1 ? `Input ${index + 1}` : 'INPUT');
         
         handles.push(
-          <div key={`input-wrapper-${index}`} style={{ position: 'absolute', top: -38, left: leftPos, transform: 'translateX(-50%)', zIndex: 1000 }}>
+          <div key={`input-wrapper-${index}`} style={{ position: 'absolute', top: -32, left: leftPos, transform: 'translateX(-50%)', zIndex: 1000 }}>
             {/* Connection circle (on top, outer side) */}
             <Handle
               type="target"
@@ -78,12 +78,12 @@ function N8nStyleNode({ data, selected, id, onOpenSettings }) {
                 cursor: 'crosshair',
                 boxShadow: '2px 2px 0px #000',
                 transition: 'all 0.2s',
-                marginBottom: '4px',
+                marginBottom: '0px',
                 zIndex: 1001,
               }}
               className="hover:!w-[20px] hover:!h-[20px] hover:!shadow-[3px_3px_0px_#000]"
             />
-            {/* Label (below circle) */}
+            {/* Label (below circle, touching) */}
             <div 
               style={{ 
                 borderRadius: '4px',
@@ -96,6 +96,7 @@ function N8nStyleNode({ data, selected, id, onOpenSettings }) {
                 color: '#000',
                 whiteSpace: 'nowrap',
                 pointerEvents: 'none',
+                marginTop: '-3px',
               }}
             >
               {inputLabel}
@@ -112,8 +113,8 @@ function N8nStyleNode({ data, selected, id, onOpenSettings }) {
         const outputLabel = output.label || (outputs.length > 1 ? `Output ${index}` : 'OUTPUT');
         
         handles.push(
-          <div key={`output-wrapper-${index}`} style={{ position: 'absolute', bottom: -38, left: leftPos, transform: 'translateX(-50%)', zIndex: 1000 }}>
-            {/* Label (above circle) */}
+          <div key={`output-wrapper-${index}`} style={{ position: 'absolute', bottom: -32, left: leftPos, transform: 'translateX(-50%)', zIndex: 1000 }}>
+            {/* Label (above circle, touching) */}
             <div 
               style={{ 
                 borderRadius: '4px',
@@ -125,7 +126,7 @@ function N8nStyleNode({ data, selected, id, onOpenSettings }) {
                 backgroundColor: '#67e8f9',
                 color: '#000',
                 whiteSpace: 'nowrap',
-                marginBottom: '4px',
+                marginBottom: '-3px',
                 pointerEvents: 'none',
               }}
             >
