@@ -1014,7 +1014,12 @@ function WorkflowCanvas(
   }
 
   return (
-    <div ref={reactFlowWrapper} className="w-full h-full relative">
+    <div 
+      ref={reactFlowWrapper} 
+      className="w-full h-full relative"
+      onDrop={onDrop}
+      onDragOver={onDragOver}
+    >
       {/* Auto-Layout Button */}
       <button
         onClick={autoLayoutNodes}
@@ -1035,8 +1040,6 @@ function WorkflowCanvas(
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onInit={handleInit}
-        onDrop={onDrop}
-        onDragOver={onDragOver}
         onNodeClick={onNodeClick}
         onNodeDoubleClick={onNodeDoubleClick}
         onSelectionChange={onSelectionChange}
