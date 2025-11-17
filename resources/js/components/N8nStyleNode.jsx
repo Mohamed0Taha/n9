@@ -53,78 +53,106 @@ function N8nStyleNode({ data, selected, id, onOpenSettings }) {
   const renderHandles = () => {
     const handles = [];
 
-    // Render input handles with labels (label IS the handle)
+    // Render input handles with labels
     inputs.forEach((input, index) => {
       if (input.type === 'main') {
         const leftPos = inputs.length === 1 ? '50%' : `${(index + 1) * 100 / (inputs.length + 1)}%`;
         const inputLabel = input.label || (inputs.length > 1 ? `Input ${index + 1}` : 'INPUT');
         
         handles.push(
-          <Handle
-            key={`input-${index}`}
-            type="target"
-            position={Position.Top}
-            id={`input-${index}`}
-            style={{ 
-              position: 'absolute', 
-              top: -22,
-              left: leftPos, 
-              transform: 'translateX(-50%)',
-              width: 'auto',
-              height: 'auto',
-              borderRadius: '4px',
-              border: '3px solid #000',
-              boxShadow: '2px 2px 0px #000',
-              padding: '4px 8px',
-              fontSize: '10px',
-              fontWeight: 'bold',
-              backgroundColor: '#bef264',
-              color: '#000',
-              cursor: 'crosshair',
-              transition: 'all 0.2s',
-            }}
-            className="hover:scale-110 hover:!shadow-[3px_3px_0px_#000]"
-          >
-            {inputLabel}
-          </Handle>
+          <div key={`input-wrapper-${index}`} style={{ position: 'absolute', top: -38, left: leftPos, transform: 'translateX(-50%)', zIndex: 1000 }}>
+            {/* Label */}
+            <div 
+              style={{ 
+                borderRadius: '4px',
+                border: '3px solid #000',
+                boxShadow: '2px 2px 0px #000',
+                padding: '4px 8px',
+                fontSize: '10px',
+                fontWeight: 'bold',
+                backgroundColor: '#bef264',
+                color: '#000',
+                whiteSpace: 'nowrap',
+                marginBottom: '4px',
+                pointerEvents: 'none',
+              }}
+            >
+              {inputLabel}
+            </div>
+            {/* Connection circle */}
+            <Handle
+              type="target"
+              position={Position.Top}
+              id={`input-${index}`}
+              style={{ 
+                position: 'relative',
+                width: '14px',
+                height: '14px',
+                border: '3px solid #000',
+                backgroundColor: '#bef264',
+                borderRadius: '50%',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                cursor: 'crosshair',
+                boxShadow: '2px 2px 0px #000',
+                transition: 'all 0.2s',
+                zIndex: 1001,
+              }}
+              className="hover:!w-[20px] hover:!h-[20px] hover:!shadow-[3px_3px_0px_#000]"
+            />
+          </div>
         );
       }
     });
 
-    // Render output handles with labels (label IS the handle)
+    // Render output handles with labels
     outputs.forEach((output, index) => {
       if (output.type === 'main') {
         const leftPos = outputs.length === 1 ? '50%' : `${(index + 1) * 100 / (outputs.length + 1)}%`;
         const outputLabel = output.label || (outputs.length > 1 ? `Output ${index}` : 'OUTPUT');
         
         handles.push(
-          <Handle
-            key={`output-${index}`}
-            type="source"
-            position={Position.Bottom}
-            id={`output-${index}`}
-            style={{ 
-              position: 'absolute', 
-              bottom: -22,
-              left: leftPos, 
-              transform: 'translateX(-50%)',
-              width: 'auto',
-              height: 'auto',
-              borderRadius: '4px',
-              border: '3px solid #000',
-              boxShadow: '2px 2px 0px #000',
-              padding: '4px 8px',
-              fontSize: '10px',
-              fontWeight: 'bold',
-              backgroundColor: '#67e8f9',
-              color: '#000',
-              cursor: 'crosshair',
-              transition: 'all 0.2s',
-            }}
-            className="hover:scale-110 hover:!shadow-[3px_3px_0px_#000]"
-          >
-            {outputLabel}
-          </Handle>
+          <div key={`output-wrapper-${index}`} style={{ position: 'absolute', bottom: -38, left: leftPos, transform: 'translateX(-50%)', zIndex: 1000 }}>
+            {/* Connection circle */}
+            <Handle
+              type="source"
+              position={Position.Bottom}
+              id={`output-${index}`}
+              style={{ 
+                position: 'relative',
+                width: '14px',
+                height: '14px',
+                border: '3px solid #000',
+                backgroundColor: '#67e8f9',
+                borderRadius: '50%',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                cursor: 'crosshair',
+                boxShadow: '2px 2px 0px #000',
+                transition: 'all 0.2s',
+                marginBottom: '4px',
+                zIndex: 1001,
+              }}
+              className="hover:!w-[20px] hover:!h-[20px] hover:!shadow-[3px_3px_0px_#000]"
+            />
+            {/* Label */}
+            <div 
+              style={{ 
+                borderRadius: '4px',
+                border: '3px solid #000',
+                boxShadow: '2px 2px 0px #000',
+                padding: '4px 8px',
+                fontSize: '10px',
+                fontWeight: 'bold',
+                backgroundColor: '#67e8f9',
+                color: '#000',
+                whiteSpace: 'nowrap',
+                pointerEvents: 'none',
+              }}
+            >
+              {outputLabel}
+            </div>
+          </div>
         );
       }
     });
