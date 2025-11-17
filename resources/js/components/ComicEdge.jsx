@@ -21,7 +21,7 @@ function ComicEdge(props) {
 
   // Adjust arrow to touch the connection circles
   // Circle is 14px + 3px border = 17px radius, adjusted for arrow to touch circle edge
-  const handleOffset = 7; // Distance to pull back so arrow tip touches circle
+  const handleOffset = 2; // Distance to pull back so arrow tip touches circle
   
   // Adjust source (output circle)
   if (sourcePosition === Position.Bottom) {
