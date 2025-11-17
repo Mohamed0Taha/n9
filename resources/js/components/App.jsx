@@ -223,24 +223,71 @@ export default function App() {
             return;
         }
         
-        // Check if execution data exists for the active node
-        const nodeExecutionData = executionData.node_results[activeNode.id];
-        if (nodeExecutionData) {
-            // Update activeNode with latest execution data
-            setActiveNode(prev => {
-                if (!prev) return prev;
-                return {
-                    ...prev,
-                    data: {
-                        ...prev.data,
-                        executionStatus: nodeExecutionData.status,
-                        executionTime: nodeExecutionData.execution_time_ms,
-                        executionData: nodeExecutionData,
-                    }
-                };
+        // Check if this is a bundle node
+        const isBundle = activeNode.type === 'bundle' || activeNode.data?.isBundle || activeNode.data?.bundledNodes?.length > 0;
+        
+        if (isBundle && activeNode.data?.bundledNodes?.length) {
+            // For bundle nodes, aggregate execution data from all bundled nodes
+            const bundledNodeIds = activeNode.data.bundledNodes.map(node => node.id);
+            const bundledExecutionData = [];
+            let bundleStatus = 'success';
+            let totalExecutionTime = 0;
+            
+            // Collect execution data from all bundled nodes
+            bundledNodeIds.forEach(nodeId => {
+                const nodeExecData = executionData.node_results[nodeId];
+                if (nodeExecData) {
+                    bundledExecutionData.push(nodeExecData);
+                    totalExecutionTime += nodeExecData.execution_time_ms || 0;
+                    if (nodeExecData.status === 'running') bundleStatus = 'running';
+                    if (nodeExecData.status === 'error') bundleStatus = 'error';
+                }
             });
+            
+            // If we have execution data from bundled nodes, create aggregated data
+            if (bundledExecutionData.length > 0) {
+                const aggregatedData = {
+                    status: bundleStatus,
+                    execution_time_ms: totalExecutionTime,
+                    // Combine outputs from all bundled nodes
+                    output: bundledExecutionData.map(d => d.output).filter(Boolean),
+                    input: bundledExecutionData[0]?.input || null, // Use first node's input
+                    bundled_results: bundledExecutionData, // Store individual results
+                };
+                
+                setActiveNode(prev => {
+                    if (!prev) return prev;
+                    return {
+                        ...prev,
+                        data: {
+                            ...prev.data,
+                            executionStatus: bundleStatus,
+                            executionTime: totalExecutionTime,
+                            executionData: aggregatedData,
+                        }
+                    };
+                });
+            }
+        } else {
+            // For regular nodes, use execution data directly
+            const nodeExecutionData = executionData.node_results[activeNode.id];
+            if (nodeExecutionData) {
+                // Update activeNode with latest execution data
+                setActiveNode(prev => {
+                    if (!prev) return prev;
+                    return {
+                        ...prev,
+                        data: {
+                            ...prev.data,
+                            executionStatus: nodeExecutionData.status,
+                            executionTime: nodeExecutionData.execution_time_ms,
+                            executionData: nodeExecutionData,
+                        }
+                    };
+                });
+            }
         }
-    }, [executionData, activeNode?.id, isNodeSettingsOpen]);
+    }, [executionData, activeNode?.id, activeNode?.type, activeNode?.data?.bundledNodes, isNodeSettingsOpen]);
 
     // Get node-specific execution data based on active node type
     // Each node type has unique input/output data structures matching n8n
