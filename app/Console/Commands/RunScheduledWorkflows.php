@@ -23,7 +23,8 @@ class RunScheduledWorkflows extends Command
         // 1. Scheduled
         // 2. Active status
         // 3. Due to run (next_scheduled_run is null or in the past)
-        $dueWorkflows = Workflow::where('is_scheduled', true)
+        $dueWorkflows = Workflow::with('versions')
+            ->where('is_scheduled', true)
             ->where('status', 'active')
             ->where(function ($query) use ($now) {
                 $query->whereNull('next_scheduled_run')
@@ -37,8 +38,16 @@ class RunScheduledWorkflows extends Command
             try {
                 $this->info("🚀 Triggering workflow: {$workflow->name} (ID: {$workflow->id})");
                 
-                // Dispatch the workflow execution job
-                RunWorkflow::dispatch($workflow);
+                // Get the latest version of the workflow
+                $latestVersion = $workflow->versions()->orderByDesc('version')->first();
+                
+                if (!$latestVersion) {
+                    $this->error("❌ No workflow version found for workflow {$workflow->id}");
+                    continue;
+                }
+                
+                // Dispatch the workflow execution job synchronously (console context)
+                RunWorkflow::dispatchSync($latestVersion);
                 
                 // Calculate next run time based on interval
                 $nextRun = $this->calculateNextRun($workflow->schedule_interval, $workflow->schedule_timezone);

@@ -118,10 +118,10 @@ class WorkflowController extends Controller
             ], 404);
         }
 
-        // Dispatch immediately to the queue - don't wait for response
-        // This ensures job starts running and updates node_results immediately
-        \Log::info('Dispatching workflow execution', ['workflow_id' => $workflow->id, 'version_id' => $latestVersion->id]);
-        RunWorkflow::dispatch($latestVersion);
+        // Execute immediately after response (Manual Trigger needs instant execution)
+        // This starts the job right after sending the response, no worker needed
+        \Log::info('Executing workflow after response', ['workflow_id' => $workflow->id, 'version_id' => $latestVersion->id]);
+        RunWorkflow::dispatchAfterResponse($latestVersion);
 
         return response()->json([
             'message' => 'Workflow execution started.',
