@@ -161,8 +161,16 @@ export default function App() {
     }, []);
 
     const handleQuickSave = useCallback(() => {
+        // Check if user is logged in before saving
+        if (!user) {
+            setShowLoginModal(true);
+            setLoginReason('save_workflow');
+            return;
+        }
+        
+        // User is logged in, proceed with save
         canvasRef.current?.saveWorkflow?.();
-    }, []);
+    }, [user]);
 
     const handleSaveFromMenu = useCallback(() => {
         handleQuickSave();
@@ -714,7 +722,7 @@ export default function App() {
                     <div className="relative" ref={editMenuRef}>
                         <button
                             type="button"
-                            className="tactile-button flex items-center gap-1 text-sm font-bold text-black px-4 py-2 rounded-lg bg-purple-400 border-4 border-black "
+                            className="tactile-button flex items-center gap-1 text-sm font-bold text-black px-4 h-16 rounded-lg bg-purple-400 border-4 border-black "
                             onClick={() => setIsEditMenuOpen((prev) => !prev)}
                             style={{ boxShadow: '4px 4px 0px #000', fontFamily: "'Bangers', cursive", letterSpacing: '1px' }}
                             aria-haspopup="true"
@@ -800,7 +808,7 @@ export default function App() {
                         {user ? (
                             <>
                                 {/* Credit Balance */}
-                                <div className="flex items-center gap-2 bg-yellow-300 px-4 py-2 rounded-lg border-3 border-black"
+                                <div className="flex items-center gap-2 bg-yellow-300 px-4 h-16 rounded-lg border-3 border-black"
                                      style={{ boxShadow: '3px 3px 0px #000' }}>
                                     <span className="text-2xl">💰</span>
                                     <span className="font-bold text-lg">{user.credit_balance}</span>
@@ -808,7 +816,7 @@ export default function App() {
                                 </div>
 
                                 {/* User Avatar and Name */}
-                                <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border-3 border-black"
+                                <div className="flex items-center gap-2 bg-white px-3 h-16 rounded-lg border-3 border-black"
                                      style={{ boxShadow: '3px 3px 0px #000' }}>
                                     {user.avatar && (
                                         <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full border-2 border-black" />
@@ -823,7 +831,7 @@ export default function App() {
                                         setUser(null);
                                         window.location.reload();
                                     }}
-                                    className="tactile-button bg-red-400 text-white px-4 py-2 rounded-lg font-bold border-3 border-black hover:bg-red-500"
+                                    className="tactile-button bg-red-400 text-white px-4 h-16 rounded-lg font-bold border-3 border-black hover:bg-red-500"
                                     style={{ boxShadow: '3px 3px 0px #000' }}
                                 >
                                     Logout
@@ -835,7 +843,7 @@ export default function App() {
                                     setShowLoginModal(true);
                                     setLoginReason('general');
                                 }}
-                                className="tactile-button bg-blue-500 text-white px-6 py-2 rounded-lg font-bold border-3 border-black hover:bg-blue-600 flex items-center gap-2"
+                                className="tactile-button bg-blue-500 text-white px-6 h-16 rounded-lg font-bold border-3 border-black hover:bg-blue-600 flex items-center gap-2"
                                 style={{ boxShadow: '3px 3px 0px #000' }}
                             >
                                 <span className="text-lg">🔐</span>
@@ -853,7 +861,7 @@ export default function App() {
                             handleExecute();
                         }}
                         disabled={isExecuting || !selectedWorkflow}
-                        className="tactile-button text-base bg-lime-400 text-black px-6 py-3 rounded-lg font-bold border-4 border-black disabled:opacity-50 disabled:cursor-not-allowed hover:bg-lime-500 active:bg-lime-600 transition-colors"
+                        className="tactile-button text-base bg-lime-400 text-black px-6 h-16 rounded-lg font-bold border-4 border-black disabled:opacity-50 disabled:cursor-not-allowed hover:bg-lime-500 active:bg-lime-600 transition-colors"
                         style={{ boxShadow: '5px 5px 0px #000', fontFamily: "'Bangers', cursive", letterSpacing: '2px', pointerEvents: (isExecuting || !selectedWorkflow) ? 'none' : 'auto' }}
                     >
                         <span className="flex items-center gap-2">

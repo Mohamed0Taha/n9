@@ -34,6 +34,17 @@ Route::prefix('app')->group(function () {
     Route::get('/workflows/{workflow}/runs', [WorkflowRunController::class, 'index']);
 });
 
+// Debug route (remove after testing)
+Route::get('/debug/google-config', function () {
+    return response()->json([
+        'client_id' => config('services.google.client_id'),
+        'redirect_uri' => config('services.google.redirect'),
+        'app_url' => config('app.url'),
+        'env_redirect_uri' => env('GOOGLE_REDIRECT_URI'),
+        'env_app_url' => env('APP_URL'),
+    ]);
+});
+
 // Admin routes
 Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/pricing', [PricingController::class, 'index']);
