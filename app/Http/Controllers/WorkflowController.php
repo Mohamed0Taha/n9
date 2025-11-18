@@ -91,9 +91,10 @@ class WorkflowController extends Controller
             ], 404);
         }
 
-        // Dispatch after response - job starts immediately after response is sent
-        // This allows polling to track progress without blocking the HTTP request
-        RunWorkflow::dispatchAfterResponse($latestVersion);
+        // Dispatch immediately to the queue - don't wait for response
+        // This ensures job starts running and updates node_results immediately
+        \Log::info('Dispatching workflow execution', ['workflow_id' => $workflow->id, 'version_id' => $latestVersion->id]);
+        RunWorkflow::dispatch($latestVersion);
 
         return response()->json([
             'message' => 'Workflow execution started.',

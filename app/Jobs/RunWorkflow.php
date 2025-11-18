@@ -27,6 +27,8 @@ class RunWorkflow implements ShouldQueue
 
     public function handle(): void
     {
+        Log::info('🚀 RunWorkflow job STARTED', ['workflow_id' => $this->version->workflow_id]);
+        
         $run = WorkflowRun::create([
             'workflow_id' => $this->version->workflow_id,
             'workflow_version_id' => $this->version->id,
@@ -36,18 +38,23 @@ class RunWorkflow implements ShouldQueue
             'node_results' => [],
         ]);
 
+        Log::info('✅ WorkflowRun created', ['run_id' => $run->id]);
+
         $nodeResults = [];
         $edges = $this->version->graph['edges'] ?? [];
         
         // Build execution order based on graph structure
         $executionOrder = $this->buildExecutionOrder($this->version->graph['nodes'], $edges);
         
-        Log::info('Starting workflow execution', [
+        Log::info('📋 Starting workflow execution', [
             'run_id' => $run->id,
-            'node_count' => count($executionOrder)
+            'node_count' => count($executionOrder),
+            'nodes' => array_map(fn($n) => $n['id'], $executionOrder)
         ]);
 
-        foreach ($executionOrder as $node) {
+        foreach ($executionOrder as $index => $node) {
+            Log::info("🔵 Setting node {$index} to RUNNING", ['node_id' => $node['id']]);
+            
             // Mark node as running
             $nodeResults[$node['id']] = [
                 'node_id' => $node['id'],
@@ -58,6 +65,7 @@ class RunWorkflow implements ShouldQueue
             ];
             
             $run->update(['node_results' => $nodeResults]);
+            Log::info('💾 DB updated with RUNNING status', ['node_id' => $node['id'], 'total_results' => count($nodeResults)]);
             
             // Simulate execution time (2-3 seconds per node for better visualization)
             usleep(rand(2000000, 3000000));

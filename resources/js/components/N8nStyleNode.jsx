@@ -40,6 +40,16 @@ function N8nStyleNode({ data, selected, id, onOpenSettings }) {
   const hasError = executionStatus === 'error' || executionStatus === 'failed';
   const executionTime = data.executionTime;
   const executionData = data.executionData;
+  
+  // DEBUG: Log execution status for this node
+  if (executionStatus) {
+    console.log(`🎨 N8nStyleNode [${id}] rendering with status:`, executionStatus, {
+      isExecuting,
+      hasExecuted,
+      hasError,
+      nodeName
+    });
+  }
 
   // Get node configuration to determine inputs/outputs
   const nodeConfig = getNodeConfiguration(nodeName, nodeType, data.category);
