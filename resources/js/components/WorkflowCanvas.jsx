@@ -78,18 +78,18 @@ function WorkflowCanvas(
   useEffect(() => {
     // If no execution data, clear any existing execution state
     if (!executionData) {
-      console.log('🧹 Clearing execution data');
+      console.log(' Clearing execution data');
       setNodeExecutionStatus({});
       return;
     }
     
     if (!executionData.node_results) {
-      console.log('⚠️ No node_results in execution data');
+      console.log(' No node_results in execution data');
       return;
     }
     
     const nodeResults = executionData.node_results;
-    console.log('🔄 Checking for execution status changes:', {
+    console.log(' Checking for execution status changes:', {
       totalNodes: Object.keys(nodeResults).length,
       statuses: Object.entries(nodeResults).map(([id, r]) => ({ id, status: r.status }))
     });
@@ -104,32 +104,29 @@ function WorkflowCanvas(
           statusToUpdate.add(id);
           
           if (result.status === 'running') {
-            console.log(`🔵 Node ${id} is RUNNING`);
+            console.log(` Node ${id} is RUNNING`);
           } else if (result.status === 'success') {
-            console.log(`✅ Node ${id} completed successfully`);
+            console.log(` Node ${id} completed successfully`);
           } else if (result.status === 'error') {
-            console.log(`❌ Node ${id} failed`);
+            console.log(` Node ${id} failed`);
           }
         }
       });
       
       // If no nodes changed, return the same object reference (no re-render!)
       if (statusToUpdate.size === 0) {
-        console.log('⏭️ No status changes detected, skipping update');
+        console.log(' No status changes detected, skipping update');
         return currentStatus;
       }
       
-      console.log(`🔄 Updating ${statusToUpdate.size} nodes with changed status`);
+      console.log(` Updating ${statusToUpdate.size} nodes with changed status`);
       
-      // Only update nodes that changed
-      return Object.fromEntries(
-        Object.entries(currentStatus).map(([id, status]) => {
-          if (!statusToUpdate.has(id)) {
-            return [id, status];
-          }
-          return [id, nodeResults[id].status];
-        })
-      );
+      // Create new status object with all current statuses plus updates
+      const newStatus = { ...currentStatus };
+      statusToUpdate.forEach(id => {
+        newStatus[id] = nodeResults[id].status;
+      });
+      return newStatus;
     });
   }, [executionData]);
 
@@ -255,27 +252,27 @@ function WorkflowCanvas(
   const onDragOver = useCallback((event) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
-    console.log('🎯 Drag over canvas');
+    console.log(' Drag over canvas');
   }, []);
 
   // Handle drop node on canvas
   const onDrop = useCallback(
     (event) => {
       event.preventDefault();
-      console.log('🎯 Drop event triggered!');
+      console.log(' Drop event triggered!');
 
       const reactFlowBounds = reactFlowWrapper.current?.getBoundingClientRect();
-      console.log('📦 ReactFlow bounds:', reactFlowBounds);
+      console.log(' ReactFlow bounds:', reactFlowBounds);
       
       const dataString = event.dataTransfer.getData('application/reactflow');
-      console.log('📝 Raw data from drag:', dataString);
+      console.log(' Raw data from drag:', dataString);
       
       const nodeData = dataString ? JSON.parse(dataString) : null;
-      console.log('🔍 Parsed node data:', nodeData);
-      console.log('🔍 ReactFlow instance:', reactFlowInstance);
+      console.log(' Parsed node data:', nodeData);
+      console.log(' ReactFlow instance:', reactFlowInstance);
 
       if (!nodeData || !reactFlowBounds) {
-        console.log('❌ Missing required data:', { nodeData: !!nodeData, reactFlowBounds: !!reactFlowBounds });
+        console.log(' Missing required data:', { nodeData: !!nodeData, reactFlowBounds: !!reactFlowBounds });
         return;
       }
 
@@ -309,13 +306,13 @@ function WorkflowCanvas(
         },
       };
 
-      console.log('✅ Adding new node:', newNode);
+      console.log(' Adding new node:', newNode);
       setNodes((nds) => nds.concat(newNode));
 
       if (onGraphChange) {
         onGraphChange({ nodes: [...nodes, newNode], edges });
       }
-      console.log('🎉 Node added successfully!');
+      console.log(' Node added successfully!');
     },
     [reactFlowInstance, nodes, edges, onGraphChange, setNodes],
   );
@@ -366,7 +363,7 @@ function WorkflowCanvas(
 
       if (nodesInsideZone.length < 2) {
         // Not enough items to bundle, just remove the zone
-        alert('⚠️ Bundle zone needs at least 2 items (nodes or bundles) inside to zip!');
+        alert(' Bundle zone needs at least 2 items (nodes or bundles) inside to zip!');
         setNodes((nds) => nds.filter((n) => n.id !== zoneId));
         return;
       }
@@ -642,7 +639,7 @@ function WorkflowCanvas(
     }));
 
     setClipboard(copiedNodes);
-    console.log(`📋 Copied ${copiedNodes.length} node(s) with configurations!`);
+    console.log(` Copied ${copiedNodes.length} node(s) with configurations!`);
   }, [selectedNodes]);
 
   // Paste nodes from clipboard
@@ -670,7 +667,7 @@ function WorkflowCanvas(
       onGraphChange({ nodes: [...nodes, ...pastedNodes], edges });
     }
 
-    console.log(`📌 Pasted ${pastedNodes.length} node(s) with configurations!`);
+    console.log(` Pasted ${pastedNodes.length} node(s) with configurations!`);
   }, [clipboard, nodes, edges, onGraphChange, setNodes, updateSelectionState]);
 
   // Keyboard shortcuts
@@ -806,7 +803,7 @@ function WorkflowCanvas(
   }, [nodes, edges, onGraphChange]);
 
   const handleInit = useCallback((instance) => {
-    console.log('🎬 ReactFlow initialized:', instance);
+    console.log(' ReactFlow initialized:', instance);
     setReactFlowInstance(instance);
   }, []);
 
@@ -911,13 +908,13 @@ function WorkflowCanvas(
     );
     
     if (selectedNodes.length < 2) {
-      alert('⚠️ Please select at least 2 items to create a bundle!');
+      alert(' Please select at least 2 items to create a bundle!');
       return;
     }
 
     // Prompt for custom bundle name
     const bundleName = prompt(
-      '📦 Name your bundle!\n\nEnter a name for this bundle (or leave empty for default):',
+      ' Name your bundle!\n\nEnter a name for this bundle (or leave empty for default):',
       `My Bundle ${Math.floor(Math.random() * 1000)}`
     );
     
@@ -1061,7 +1058,13 @@ function WorkflowCanvas(
       </button>
       
       <ReactFlow
-        nodes={nodes.map(node => ({ ...node, data: { ...node.data, executionStatus: nodeExecutionStatus[node.id] } }))}
+        nodes={nodes.map(node => ({
+          ...node,
+          data: {
+            ...node.data,
+            executionStatus: nodeExecutionStatus[node.id]
+          }
+        }))}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
