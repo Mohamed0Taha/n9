@@ -64,6 +64,7 @@ export default function App() {
     const canvasRef = useRef(null);
     const editMenuRef = useRef(null);
     const pollingIntervalRef = useRef(null);
+    const executionTimeoutRef = useRef(null);
 
     useEffect(() => {
         (async () => {
@@ -411,6 +412,10 @@ export default function App() {
                         clearInterval(pollingIntervalRef.current);
                         pollingIntervalRef.current = null;
                     }
+                    if (executionTimeoutRef.current) {
+                        clearTimeout(executionTimeoutRef.current);
+                        executionTimeoutRef.current = null;
+                    }
                     setIsExecuting(false);
                     
                     // Don't show global message - spinners and badges on nodes are enough
@@ -423,12 +428,21 @@ export default function App() {
     }, []);
 
     const handleExecute = useCallback(async () => {
+        console.log('🎬 Execute button clicked!');
+        
         if (!selectedWorkflow) {
+            console.log('❌ No workflow selected');
             setExecutionMessage({ type: 'error', text: 'No workflow selected' });
             setTimeout(() => setExecutionMessage(null), 3000);
             return;
         }
+        
+        if (isExecuting) {
+            console.log('⚠️ Already executing, ignoring click');
+            return;
+        }
 
+        console.log('✅ Starting execution for workflow:', selectedWorkflow.id);
         setIsExecuting(true);
         setExecutionData(null);
         
@@ -450,7 +464,9 @@ export default function App() {
         setExecutionMessage(null);
 
         try {
-            await axios.post(`/app/workflows/${selectedWorkflow.id}/execute`);
+            console.log('📤 Sending execute request...');
+            const response = await axios.post(`/app/workflows/${selectedWorkflow.id}/execute`);
+            console.log('✅ Execute request successful:', response.data);
             
             // DON'T update the workflow - it would replace current graph with old saved version
             // Just start polling for execution status
@@ -468,19 +484,37 @@ export default function App() {
             pollingIntervalRef.current = setInterval(() => {
                 pollExecutionStatus(selectedWorkflow.id);
             }, 250);
+            
+            // Safeguard: Re-enable button after 30 seconds max
+            if (executionTimeoutRef.current) {
+                clearTimeout(executionTimeoutRef.current);
+            }
+            executionTimeoutRef.current = setTimeout(() => {
+                if (pollingIntervalRef.current) {
+                    console.log('⚠️ Execution timeout - stopping polling');
+                    clearInterval(pollingIntervalRef.current);
+                    pollingIntervalRef.current = null;
+                    setIsExecuting(false);
+                }
+                executionTimeoutRef.current = null;
+            }, 30000);
         } catch (error) {
+            console.error('❌ Execute request failed:', error);
             const message = error.response?.data?.message ?? 'Failed to execute workflow';
             setExecutionMessage({ type: 'error', text: `❌ ${message}` });
             setTimeout(() => setExecutionMessage(null), 5000);
             setIsExecuting(false);
         }
-    }, [selectedWorkflow, pollExecutionStatus]);
+    }, [selectedWorkflow, pollExecutionStatus, isExecuting]);
     
-    // Cleanup polling on unmount
+    // Cleanup polling and timeout on unmount
     useEffect(() => {
         return () => {
             if (pollingIntervalRef.current) {
                 clearInterval(pollingIntervalRef.current);
+            }
+            if (executionTimeoutRef.current) {
+                clearTimeout(executionTimeoutRef.current);
             }
         };
     }, []);
@@ -722,10 +756,14 @@ export default function App() {
                     </div>
                     <button
                         type="button"
-                        onClick={handleExecute}
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleExecute();
+                        }}
                         disabled={isExecuting || !selectedWorkflow}
-                        className="tactile-button text-base bg-lime-400 text-black px-6 py-3 rounded-lg font-bold border-4 border-black disabled:opacity-50 disabled:cursor-not-allowed"
-                        style={{ boxShadow: '5px 5px 0px #000', fontFamily: "'Bangers', cursive", letterSpacing: '2px' }}
+                        className="tactile-button text-base bg-lime-400 text-black px-6 py-3 rounded-lg font-bold border-4 border-black disabled:opacity-50 disabled:cursor-not-allowed hover:bg-lime-500 active:bg-lime-600 transition-colors"
+                        style={{ boxShadow: '5px 5px 0px #000', fontFamily: "'Bangers', cursive", letterSpacing: '2px', pointerEvents: (isExecuting || !selectedWorkflow) ? 'none' : 'auto' }}
                     >
                         <span className="flex items-center gap-2">
                             {isExecuting ? '⚡ RUNNING...' : '▶️ EXECUTE!'}
