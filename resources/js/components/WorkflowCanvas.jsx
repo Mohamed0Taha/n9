@@ -64,6 +64,7 @@ function WorkflowCanvas(
 ) {
   const reactFlowWrapper = useRef(null);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
+  const hasFitViewRef = useRef(false);
   const [selectedNode, setSelectedNode] = useState(null);
   const [selectedNodes, setSelectedNodes] = useState([]);
   const hasInitializedGraph = useRef(false);
@@ -254,6 +255,18 @@ function WorkflowCanvas(
       hasInitializedGraph.current = true;
     }
   }, [graph, loadGraphFromParent]);
+
+  // Run fitView once when the canvas first loads nodes
+  useEffect(() => {
+    if (!reactFlowInstance || hasFitViewRef.current) {
+      return;
+    }
+
+    if (nodes.length > 0) {
+      reactFlowInstance.fitView({ padding: 0.2 });
+      hasFitViewRef.current = true;
+    }
+  }, [reactFlowInstance, nodes.length]);
 
   // Handle connection between nodes
   const onConnect = useCallback(
@@ -1088,7 +1101,6 @@ function WorkflowCanvas(
         onNodeDoubleClick={onNodeDoubleClick}
         onSelectionChange={onSelectionChange}
         nodeTypes={nodeTypes}
-        fitView
         attributionPosition="bottom-left"
         className="bg-slate-50"
         edgeTypes={edgeTypes}
