@@ -76,6 +76,7 @@ function WorkflowCanvas(
   useEffect(() => {
     // If no execution data, clear any existing execution state
     if (!executionData) {
+      console.log('🧹 Clearing execution data');
       setNodes((currentNodes) =>
         currentNodes.map((node) => {
           if (!node.data?.executionStatus) {
@@ -98,16 +99,29 @@ function WorkflowCanvas(
     }
     
     if (!executionData.node_results) {
+      console.log('⚠️ No node_results in execution data');
       return;
     }
     
     const nodeResults = executionData.node_results;
+    console.log('🔄 Updating nodes with execution status:', {
+      totalNodes: Object.keys(nodeResults).length,
+      statuses: Object.entries(nodeResults).map(([id, r]) => ({ id, status: r.status }))
+    });
     
     setNodes((currentNodes) =>
       currentNodes.map((node) => {
         const result = nodeResults[node.id];
         if (!result) {
           return node;
+        }
+        
+        if (result.status === 'running') {
+          console.log(`🔵 Node ${node.id} is RUNNING`);
+        } else if (result.status === 'success') {
+          console.log(`✅ Node ${node.id} completed successfully`);
+        } else if (result.status === 'error') {
+          console.log(`❌ Node ${node.id} failed`);
         }
         
         // Only update data and className, preserve everything else (position, etc.)

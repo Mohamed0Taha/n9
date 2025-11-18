@@ -395,11 +395,18 @@ export default function App() {
     const pollExecutionStatus = useCallback(async (workflowId) => {
         try {
             const { data } = await axios.get(`/app/workflows/${workflowId}/execution`);
+            console.log('📊 Poll response:', {
+                hasRun: !!data.run,
+                status: data.run?.status,
+                nodeResultsCount: Object.keys(data.run?.node_results || {}).length
+            });
+            
             if (data.run) {
                 setExecutionData(data.run);
                 
                 // Stop polling when execution is complete
                 if (data.run.status === 'success' || data.run.status === 'failed') {
+                    console.log('⏹️ Execution complete, stopping polling');
                     if (pollingIntervalRef.current) {
                         clearInterval(pollingIntervalRef.current);
                         pollingIntervalRef.current = null;
