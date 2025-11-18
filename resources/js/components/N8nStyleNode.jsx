@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { Handle, Position } from 'reactflow';
 import { getNodeConfiguration } from '../data/nodeConfigurations.js';
 
-function N8nStyleNode({ data, selected, id, onOpenSettings }) {
+const N8nStyleNode = memo(({ data, selected, id, onOpenSettings }) => {
   const isBundle = data.isBundle || Array.isArray(data.bundledNodes);
   const nodeName = data.label || data.name || 'Node';
   const nodeType = data.type || nodeName; // Get the node type for configuration lookup
@@ -412,6 +412,6 @@ function N8nStyleNode({ data, selected, id, onOpenSettings }) {
       </div>
     </>
   );
-}
+});
 
-export default memo(N8nStyleNode);
+export default N8nStyleNode;

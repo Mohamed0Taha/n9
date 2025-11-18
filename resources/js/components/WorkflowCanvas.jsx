@@ -72,30 +72,14 @@ function WorkflowCanvas(
 
   const [nodes, setNodes, baseOnNodesChange] = useNodesState(buildNodes(graph));
   const [edges, setEdges, onEdgesChange] = useEdgesState(buildEdges(graph));
+  const [nodeExecutionStatus, setNodeExecutionStatus] = useState({});
 
   // Update nodes with execution status
   useEffect(() => {
     // If no execution data, clear any existing execution state
     if (!executionData) {
       console.log('🧹 Clearing execution data');
-      setNodes((currentNodes) =>
-        currentNodes.map((node) => {
-          if (!node.data?.executionStatus) {
-            return node;
-          }
-          const baseClassName = node.className?.replace(/execution-\w+/g, '').trim() || '';
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              executionStatus: undefined,
-              executionTime: undefined,
-              executionData: undefined,
-            },
-            className: baseClassName,
-          };
-        })
-      );
+      setNodeExecutionStatus({});
       return;
     }
     
@@ -111,57 +95,43 @@ function WorkflowCanvas(
     });
     
     // Use functional update to check changes and only update if needed
-    setNodes((currentNodes) => {
-      const nodesToUpdate = new Set();
+    setNodeExecutionStatus((currentStatus) => {
+      const statusToUpdate = new Set();
       
       // Check which nodes actually changed status
-      currentNodes.forEach((node) => {
-        const result = nodeResults[node.id];
-        if (result && node.data?.executionStatus !== result.status) {
-          nodesToUpdate.add(node.id);
+      Object.entries(nodeResults).forEach(([id, result]) => {
+        if (result && currentStatus[id] !== result.status) {
+          statusToUpdate.add(id);
           
           if (result.status === 'running') {
-            console.log(`🔵 Node ${node.id} is RUNNING`);
+            console.log(`🔵 Node ${id} is RUNNING`);
           } else if (result.status === 'success') {
-            console.log(`✅ Node ${node.id} completed successfully`);
+            console.log(`✅ Node ${id} completed successfully`);
           } else if (result.status === 'error') {
-            console.log(`❌ Node ${node.id} failed`);
+            console.log(`❌ Node ${id} failed`);
           }
         }
       });
       
-      // If no nodes changed, return the same array reference (no re-render!)
-      if (nodesToUpdate.size === 0) {
+      // If no nodes changed, return the same object reference (no re-render!)
+      if (statusToUpdate.size === 0) {
         console.log('⏭️ No status changes detected, skipping update');
-        return currentNodes;
+        return currentStatus;
       }
       
-      console.log(`🔄 Updating ${nodesToUpdate.size} nodes with changed status`);
+      console.log(`🔄 Updating ${statusToUpdate.size} nodes with changed status`);
       
       // Only update nodes that changed
-      return currentNodes.map((node) => {
-        // If this node doesn't need updating, return exact same object
-        if (!nodesToUpdate.has(node.id)) {
-          return node;
-        }
-        
-        const result = nodeResults[node.id];
-        const baseClassName = node.className?.replace(/execution-\w+/g, '').trim() || '';
-        
-        // Return new object ONLY for nodes that changed
-        return {
-          ...node,
-          data: {
-            ...node.data,
-            executionStatus: result.status,
-            executionTime: result.execution_time_ms,
-            executionData: result,
-          },
-          className: `${baseClassName} execution-${result.status}`.trim(),
-        };
-      });
+      return Object.fromEntries(
+        Object.entries(currentStatus).map(([id, status]) => {
+          if (!statusToUpdate.has(id)) {
+            return [id, status];
+          }
+          return [id, nodeResults[id].status];
+        })
+      );
     });
-  }, [executionData, setNodes]);
+  }, [executionData]);
 
   const updateSelectionState = useCallback(
     (selection) => {
@@ -1091,7 +1061,7 @@ function WorkflowCanvas(
       </button>
       
       <ReactFlow
-        nodes={nodes}
+        nodes={nodes.map(node => ({ ...node, data: { ...node.data, executionStatus: nodeExecutionStatus[node.id] } }))}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
