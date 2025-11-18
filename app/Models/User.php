@@ -24,6 +24,10 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'google_id',
+        'avatar',
+        'credit_balance',
+        'is_admin',
     ];
 
     /**
@@ -46,6 +50,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'credit_balance' => 'decimal:2',
+            'is_admin' => 'boolean',
         ];
     }
 
@@ -57,5 +63,66 @@ class User extends Authenticatable
     public function workflows(): HasMany
     {
         return $this->hasMany(Workflow::class);
+    }
+
+    public function creditTransactions(): HasMany
+    {
+        return $this->hasMany(CreditTransaction::class);
+    }
+
+    /**
+     * Check if user has enough credits for an action
+     */
+    public function hasCredits(string $action): bool
+    {
+        $cost = PricingConfig::getCost($action);
+        return $this->credit_balance >= $cost;
+    }
+
+    /**
+     * Spend credits for an action
+     */
+    public function spendCredits(string $action, ?int $referenceId = null, ?array $metadata = null): bool
+    {
+        $cost = PricingConfig::getCost($action);
+        
+        if ($this->credit_balance < $cost) {
+            return false;
+        }
+
+        $pricing = PricingConfig::where('key', $action)->first();
+        
+        CreditTransaction::createTransaction(
+            $this,
+            'spend',
+            -$cost,
+            "Spent credits: {$pricing->name}",
+            $action,
+            $referenceId,
+            $metadata
+        );
+
+        return true;
+    }
+
+    /**
+     * Add credits to user account
+     */
+    public function addCredits(float $amount, string $description, string $type = 'purchase'): void
+    {
+        CreditTransaction::createTransaction(
+            $this,
+            $type,
+            $amount,
+            $description
+        );
+    }
+
+    /**
+     * Get credit cost for an action
+     */
+    public function getCreditCost(string $action): float
+    {
+        return PricingConfig::getCost($action);
     }
 }

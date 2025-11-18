@@ -4,6 +4,8 @@ import WorkflowCanvas from './WorkflowCanvas.jsx';
 import PromptPanel from './PromptPanel.jsx';
 import NodesCarousel from './NodesCarousel.jsx';
 import NodeSettingsPanel from './NodeSettingsPanel.jsx';
+import GoogleLoginModal from './GoogleLoginModal.jsx';
+import InsufficientCreditsModal from './InsufficientCreditsModal.jsx';
 import { n8nNodes } from '../data/n8nNodes.js';
 import { getNodeExecutionData } from '../data/nodeExecutionData.js';
 
@@ -61,10 +63,27 @@ export default function App() {
     const [isExecuting, setIsExecuting] = useState(false);
     const [executionMessage, setExecutionMessage] = useState(null);
     const [executionData, setExecutionData] = useState(null);
+    const [user, setUser] = useState(null);
+    const [showLoginModal, setShowLoginModal] = useState(false);
+    const [loginReason, setLoginReason] = useState('');
+    const [showCreditsModal, setShowCreditsModal] = useState(false);
+    const [creditInfo, setCreditInfo] = useState({ required: 0, current: 0, action: '' });
     const canvasRef = useRef(null);
     const editMenuRef = useRef(null);
     const pollingIntervalRef = useRef(null);
     const executionTimeoutRef = useRef(null);
+
+    // Fetch current user on mount
+    useEffect(() => {
+        (async () => {
+            try {
+                const { data } = await axios.get('/auth/user');
+                setUser(data.user);
+            } catch (error) {
+                console.error('Failed to fetch user', error);
+            }
+        })();
+    }, []);
 
     useEffect(() => {
         (async () => {
@@ -385,8 +404,29 @@ export default function App() {
                         graph: nextGraph,
                     });
                     console.log('✅ Node configuration saved to database');
+                    
+                    // Refresh user balance if logged in
+                    if (user) {
+                        const { data } = await axios.get('/auth/user');
+                        setUser(data.user);
+                    }
                 } catch (error) {
                     console.error('Failed to save node configuration:', error);
+                    
+                    if (error.response?.status === 401) {
+                        // Not logged in - show Google login modal
+                        setShowLoginModal(true);
+                        setLoginReason('save_workflow');
+                    } else if (error.response?.status === 402) {
+                        // Insufficient credits
+                        const { required_credits, current_balance, pricing_key } = error.response.data;
+                        setCreditInfo({
+                            required: required_credits,
+                            current: current_balance,
+                            action: pricing_key || 'save_workflow'
+                        });
+                        setShowCreditsModal(true);
+                    }
                 }
             }
         },
@@ -754,6 +794,56 @@ export default function App() {
                             </div>
                         )}
                     </div>
+
+                    {/* User Info and Credits */}
+                    <div className="flex items-center gap-3 ml-auto">
+                        {user ? (
+                            <>
+                                {/* Credit Balance */}
+                                <div className="flex items-center gap-2 bg-yellow-300 px-4 py-2 rounded-lg border-3 border-black"
+                                     style={{ boxShadow: '3px 3px 0px #000' }}>
+                                    <span className="text-2xl">💰</span>
+                                    <span className="font-bold text-lg">{user.credit_balance}</span>
+                                    <span className="text-xs text-gray-700">credits</span>
+                                </div>
+
+                                {/* User Avatar and Name */}
+                                <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border-3 border-black"
+                                     style={{ boxShadow: '3px 3px 0px #000' }}>
+                                    {user.avatar && (
+                                        <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full border-2 border-black" />
+                                    )}
+                                    <span className="font-medium text-sm">{user.name}</span>
+                                </div>
+
+                                {/* Logout Button */}
+                                <button
+                                    onClick={async () => {
+                                        await axios.post('/auth/logout');
+                                        setUser(null);
+                                        window.location.reload();
+                                    }}
+                                    className="tactile-button bg-red-400 text-white px-4 py-2 rounded-lg font-bold border-3 border-black hover:bg-red-500"
+                                    style={{ boxShadow: '3px 3px 0px #000' }}
+                                >
+                                    Logout
+                                </button>
+                            </>
+                        ) : (
+                            <button
+                                onClick={() => {
+                                    setShowLoginModal(true);
+                                    setLoginReason('general');
+                                }}
+                                className="tactile-button bg-blue-500 text-white px-6 py-2 rounded-lg font-bold border-3 border-black hover:bg-blue-600 flex items-center gap-2"
+                                style={{ boxShadow: '3px 3px 0px #000' }}
+                            >
+                                <span className="text-lg">🔐</span>
+                                <span>Sign In</span>
+                            </button>
+                        )}
+                    </div>
+
                     <button
                         type="button"
                         data-execute-workflow="true"
@@ -826,6 +916,22 @@ export default function App() {
                 isSidebarOpen={isSidebarOpen}
                 isNodeSettingsOpen={isNodeSettingsOpen}
                 selectedNodes={selectedNodes}
+            />
+
+            {/* Google Login Modal */}
+            <GoogleLoginModal
+                isOpen={showLoginModal}
+                onClose={() => setShowLoginModal(false)}
+                reason={loginReason}
+            />
+
+            {/* Insufficient Credits Modal */}
+            <InsufficientCreditsModal
+                isOpen={showCreditsModal}
+                onClose={() => setShowCreditsModal(false)}
+                required={creditInfo.required}
+                current={creditInfo.current}
+                action={creditInfo.action}
             />
         </div>
         <style>{`

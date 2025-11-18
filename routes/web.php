@@ -1,7 +1,10 @@
 <?php
 
+use App\Http\Controllers\Admin\CreditManagementController;
+use App\Http\Controllers\Admin\PricingController;
 use App\Http\Controllers\AiWorkflowController;
 use App\Http\Controllers\AppBootstrapController;
+use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\SpaController;
 use App\Http\Controllers\WorkflowController;
 use App\Http\Controllers\WorkflowExecutionController;
@@ -13,6 +16,14 @@ require __DIR__.'/test-http.php';
 
 Route::get('/', SpaController::class);
 
+// Google OAuth routes
+Route::prefix('auth')->group(function () {
+    Route::get('/google', [GoogleAuthController::class, 'redirectToGoogle']);
+    Route::get('/google/callback', [GoogleAuthController::class, 'handleGoogleCallback']);
+    Route::post('/logout', [GoogleAuthController::class, 'logout']);
+    Route::get('/user', [GoogleAuthController::class, 'user']);
+});
+
 Route::prefix('app')->group(function () {
     Route::get('/bootstrap', AppBootstrapController::class);
     Route::post('/ai/generate', AiWorkflowController::class);
@@ -21,4 +32,15 @@ Route::prefix('app')->group(function () {
     Route::post('/workflows/{workflow}/execute', [WorkflowController::class, 'execute']);
     Route::get('/workflows/{workflow}/execution', [WorkflowExecutionController::class, 'getLatestRun']);
     Route::get('/workflows/{workflow}/runs', [WorkflowRunController::class, 'index']);
+});
+
+// Admin routes
+Route::prefix('admin')->middleware('auth')->group(function () {
+    Route::get('/pricing', [PricingController::class, 'index']);
+    Route::patch('/pricing/{pricing}', [PricingController::class, 'update']);
+    Route::post('/pricing/{pricing}/toggle', [PricingController::class, 'toggleActive']);
+    
+    Route::get('/users', [CreditManagementController::class, 'listUsers']);
+    Route::post('/users/{user}/credits', [CreditManagementController::class, 'addCredits']);
+    Route::get('/users/{user}/credit-history', [CreditManagementController::class, 'creditHistory']);
 });

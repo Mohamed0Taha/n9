@@ -58,6 +58,32 @@ class WorkflowController extends Controller
             'graph' => ['nullable', 'array'],
         ]);
 
+        // Check if user is authenticated
+        if (!auth()->check()) {
+            return response()->json([
+                'message' => 'Please sign in to save workflows',
+                'action' => 'login_required',
+                'reason' => 'save_workflow',
+            ], 401);
+        }
+
+        // Check if user has enough credits
+        $user = auth()->user();
+        if (!$user->hasCredits('save_workflow')) {
+            $cost = $user->getCreditCost('save_workflow');
+            return response()->json([
+                'message' => "Insufficient credits. You need {$cost} credits to save workflows.",
+                'action' => 'insufficient_credits',
+                'required_credits' => $cost,
+                'current_balance' => $user->credit_balance,
+            ], 402);
+        }
+
+        // Deduct credits for saving
+        $user->spendCredits('save_workflow', $workflow->id, [
+            'workflow_name' => $workflow->name,
+        ]);
+
         $workflow->fill($request->only('name', 'description', 'status'));
         
         // Extract schedule configuration from graph if present

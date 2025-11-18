@@ -23,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Register middleware alias for route-specific usage
         $middleware->alias([
             'require.auth.save' => \App\Http\Middleware\RequireAuthForSave::class,
+            'check.credits' => \App\Http\Middleware\CheckCredits::class,
         ]);
     })
     ->withSchedule(function (Schedule $schedule): void {
