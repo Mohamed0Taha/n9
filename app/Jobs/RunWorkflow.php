@@ -39,9 +39,6 @@ class RunWorkflow implements ShouldQueue
         ]);
 
         Log::info('✅ WorkflowRun created', ['run_id' => $run->id]);
-
-        // Small delay to ensure the run is committed to database and polling has started
-        usleep(500000); // 0.5 second delay
         
         $nodeResults = [];
         $edges = $this->version->graph['edges'] ?? [];
@@ -70,9 +67,6 @@ class RunWorkflow implements ShouldQueue
             $run->update(['node_results' => $nodeResults]);
             $run->refresh(); // Ensure the change is committed
             Log::info('💾 DB updated with RUNNING status', ['node_id' => $node['id'], 'total_results' => count($nodeResults)]);
-            
-            // Small delay to ensure DB write is visible to polling
-            usleep(100000); // 0.1 second
             
             // Simulate execution time (2-3 seconds per node for better visualization)
             usleep(rand(2000000, 3000000));

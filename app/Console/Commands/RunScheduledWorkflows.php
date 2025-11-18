@@ -46,8 +46,8 @@ class RunScheduledWorkflows extends Command
                     continue;
                 }
                 
-                // Dispatch the workflow execution job synchronously (console context)
-                RunWorkflow::dispatchSync($latestVersion);
+                // Dispatch the workflow execution job to queue
+                RunWorkflow::dispatch($latestVersion);
                 
                 // Calculate next run time based on interval
                 $nextRun = $this->calculateNextRun($workflow->schedule_interval, $workflow->schedule_timezone);
