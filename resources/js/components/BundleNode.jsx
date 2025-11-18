@@ -1,8 +1,23 @@
-import { memo } from 'react';
 import { Handle, Position } from 'reactflow';
 
 function BundleNode({ data, selected, id, onOpenSettings }) {
   const nodeCount = data.bundledNodes?.length || 0;
+  
+  // Execution status from real-time data
+  const executionStatus = data.executionStatus;
+  const isExecuting = executionStatus === 'running';
+  const hasExecuted = executionStatus === 'success';
+  const hasError = executionStatus === 'error' || executionStatus === 'failed';
+  
+  // DEBUG: Log execution status for this bundle
+  if (executionStatus) {
+    console.log(`🎨 BundleNode [${id}] rendering with status:`, executionStatus, {
+      isExecuting,
+      hasExecuted,
+      hasError,
+      nodeCount
+    });
+  }
 
   return (
     <>
@@ -54,7 +69,7 @@ function BundleNode({ data, selected, id, onOpenSettings }) {
           }}
         >
           <div
-            className="flex items-center justify-center w-14 h-14 rounded-lg border-3 border-black"
+            className="flex items-center justify-center w-14 h-14 rounded-lg border-3 border-black relative"
             style={{
               backgroundColor: '#1e293b',
               color: '#000',
@@ -148,6 +163,34 @@ function BundleNode({ data, selected, id, onOpenSettings }) {
                 </linearGradient>
               </defs>
             </svg>
+            
+            {/* Spinner overlay when executing - STRONG BLUE OVERLAY */}
+            {isExecuting && (
+              <div className="absolute inset-0 flex items-center justify-center bg-blue-500/95 rounded-lg border-2 border-blue-700">
+                <svg className="animate-spin h-10 w-10 text-white drop-shadow-lg" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </div>
+            )}
+            
+            {/* Success checkmark when completed */}
+            {hasExecuted && !isExecuting && (
+              <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-1 border-2 border-black" style={{ boxShadow: '2px 2px 0px #000' }}>
+                <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            )}
+            
+            {/* Error indicator when failed */}
+            {hasError && !isExecuting && (
+              <div className="absolute -top-1 -right-1 bg-red-500 rounded-full p-1 border-2 border-black" style={{ boxShadow: '2px 2px 0px #000' }}>
+                <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <div className="font-bold text-base text-black truncate" style={{ fontFamily: "'Comic Neue', cursive" }}>
@@ -233,4 +276,4 @@ function BundleNode({ data, selected, id, onOpenSettings }) {
   );
 }
 
-export default memo(BundleNode);
+export default BundleNode;

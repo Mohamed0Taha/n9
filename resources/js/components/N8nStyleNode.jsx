@@ -383,24 +383,6 @@ const N8nStyleNode = ({ data, selected, id, onOpenSettings }) => {
           style={{ right: -7 }}
         />
 
-        {/* Execution status badge */}
-        {isExecuting && (
-          <div className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs font-bold rounded-full w-10 h-10 flex items-center justify-center shadow-md border-2 border-black animate-spin" style={{ boxShadow: '2px 2px 0px #000' }}>
-            ⚡
-          </div>
-        )}
-        
-        {hasExecuted && executionStatus === 'success' && (
-          <div className="absolute -top-2 -right-2 bg-green-500 text-white text-2xl font-bold rounded-full w-10 h-10 flex items-center justify-center shadow-md border-2 border-black" style={{ boxShadow: '2px 2px 0px #000' }}>
-            ✓
-          </div>
-        )}
-        
-        {executionStatus === 'failed' && (
-          <div className="absolute -top-2 -right-2 bg-red-500 text-white text-2xl font-bold rounded-full w-10 h-10 flex items-center justify-center shadow-md border-2 border-black" style={{ boxShadow: '2px 2px 0px #000' }}>
-            ✗
-          </div>
-        )}
         
         {/* Execution count badge (like n8n) */}
         {data.executions > 0 && !isExecuting && !hasExecuted && (
