@@ -26,25 +26,48 @@ export default function NodesCarousel({ onNodeDragStart }) {
     }
   };
 
+  // Infinite loop nodes - triple the array for seamless looping
+  const loopedNodes = useMemo(() => {
+    if (filteredNodes.length === 0) return [];
+    return [...filteredNodes, ...filteredNodes, ...filteredNodes];
+  }, [filteredNodes]);
+
   // Auto-scroll effect - smooth continuous upward scroll
   useEffect(() => {
-    if (!isAutoScrollActive || !nodesListRef.current) return;
+    const container = nodesListRef.current;
+    if (!container) {
+      console.log('❌ No container ref');
+      return;
+    }
+
+    console.log('✅ Auto-scroll effect started', { 
+      isActive: isAutoScrollActive, 
+      scrollHeight: container.scrollHeight,
+      clientHeight: container.clientHeight,
+      maxScroll: container.scrollHeight - container.clientHeight
+    });
 
     let lastTime = performance.now();
-    const scrollSpeed = 0.02; // pixels per millisecond (very slow for subtle effect)
+    const scrollSpeed = 30; // pixels per second (slow and subtle)
 
     const animate = (currentTime) => {
-      const deltaTime = currentTime - lastTime;
+      if (!container) return;
+
+      const deltaTime = (currentTime - lastTime) / 1000; // Convert to seconds
       lastTime = currentTime;
 
-      if (nodesListRef.current && isAutoScrollActive) {
-        const container = nodesListRef.current;
-        const newScrollTop = container.scrollTop + (scrollSpeed * deltaTime);
+      if (isAutoScrollActive) {
+        const maxScroll = container.scrollHeight - container.clientHeight;
         
-        // Reset scroll to create infinite loop effect
-        if (newScrollTop >= container.scrollHeight / 3) {
-          container.scrollTop = 0;
-        } else {
+        if (maxScroll > 0) {
+          let newScrollTop = container.scrollTop + (scrollSpeed * deltaTime);
+          
+          // Reset scroll to create infinite loop effect (using the tripled array)
+          const resetPoint = container.scrollHeight * 0.66; // Reset at 2/3 point
+          if (newScrollTop >= resetPoint) {
+            newScrollTop = container.scrollHeight * 0.33; // Jump back to 1/3 point
+          }
+          
           container.scrollTop = newScrollTop;
         }
       }
@@ -59,18 +82,12 @@ export default function NodesCarousel({ onNodeDragStart }) {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [isAutoScrollActive]);
+  }, [isAutoScrollActive, loopedNodes.length]);
 
   // Scroll category horizontally
   const scrollToCategory = (dir) => {
     scrollContainerRef.current?.scrollBy({ left: dir === 'left' ? -200 : 200, behavior: 'smooth' });
   };
-
-  // Infinite loop nodes - triple the array for seamless looping
-  const loopedNodes = useMemo(() => {
-    if (filteredNodes.length === 0) return [];
-    return [...filteredNodes, ...filteredNodes, ...filteredNodes];
-  }, [filteredNodes]);
 
   return (
     <div className="w-96 flex-shrink-0 bg-yellow-100 border-r-4 border-black flex flex-col h-full relative overflow-hidden" style={{ boxShadow: '4px 0px 0px #000', fontFamily: "'Comic Neue', cursive" }}>
