@@ -413,11 +413,8 @@ export default function App() {
                     }
                     setIsExecuting(false);
                     
-                    const message = data.run.status === 'success' 
-                        ? '✅ Workflow executed successfully!'
-                        : '❌ Workflow execution failed';
-                    setExecutionMessage({ type: data.run.status === 'success' ? 'success' : 'error', text: message });
-                    setTimeout(() => setExecutionMessage(null), 5000);
+                    // Don't show global message - spinners and badges on nodes are enough
+                    setExecutionMessage(null);
                 }
             }
         } catch (error) {
@@ -463,14 +460,13 @@ export default function App() {
                 clearInterval(pollingIntervalRef.current);
             }
             
-            // Wait 100ms before first poll to let job start
-            setTimeout(() => {
+            // Poll immediately and frequently to catch running states
+            console.log('🚀 Starting aggressive polling');
+            pollExecutionStatus(selectedWorkflow.id);
+            
+            // Then poll every 100ms for real-time updates (more frequent to catch running states)
+            pollingIntervalRef.current = setInterval(() => {
                 pollExecutionStatus(selectedWorkflow.id);
-                
-                // Then poll every 300ms for real-time updates
-                pollingIntervalRef.current = setInterval(() => {
-                    pollExecutionStatus(selectedWorkflow.id);
-                }, 300);
             }, 100);
         } catch (error) {
             const message = error.response?.data?.message ?? 'Failed to execute workflow';
