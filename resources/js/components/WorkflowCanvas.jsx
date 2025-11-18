@@ -116,6 +116,11 @@ function WorkflowCanvas(
           return node;
         }
         
+        // Skip update if status hasn't changed (prevents jumping!)
+        if (node.data?.executionStatus === result.status) {
+          return node;
+        }
+        
         if (result.status === 'running') {
           console.log(`🔵 Node ${node.id} is RUNNING`);
         } else if (result.status === 'success') {
@@ -124,10 +129,11 @@ function WorkflowCanvas(
           console.log(`❌ Node ${node.id} failed`);
         }
         
-        // Only update data and className, preserve everything else (position, etc.)
+        // Only update data and className, PRESERVE POSITION!
         const baseClassName = node.className?.replace(/execution-\w+/g, '').trim() || '';
         return {
           ...node,
+          position: node.position, // Explicitly preserve position
           data: {
             ...node.data,
             executionStatus: result.status,

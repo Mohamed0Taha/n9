@@ -460,14 +460,14 @@ export default function App() {
                 clearInterval(pollingIntervalRef.current);
             }
             
-            // Poll immediately and frequently to catch running states
-            console.log('🚀 Starting aggressive polling');
+            // Poll immediately to catch running states
+            console.log('🚀 Starting polling');
             pollExecutionStatus(selectedWorkflow.id);
             
-            // Then poll every 100ms for real-time updates (more frequent to catch running states)
+            // Then poll every 250ms for real-time updates (balanced between responsiveness and performance)
             pollingIntervalRef.current = setInterval(() => {
                 pollExecutionStatus(selectedWorkflow.id);
-            }, 100);
+            }, 250);
         } catch (error) {
             const message = error.response?.data?.message ?? 'Failed to execute workflow';
             setExecutionMessage({ type: 'error', text: `❌ ${message}` });
