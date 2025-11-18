@@ -1,10 +1,13 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { n8nNodes, nodeCategories, getNodesByCategory, searchNodes } from '../data/n8nNodes.js';
 
 export default function NodesCarousel({ onNodeDragStart }) {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isAutoScrollActive, setIsAutoScrollActive] = useState(true);
   const scrollContainerRef = useRef(null);
+  const nodesListRef = useRef(null);
+  const animationFrameRef = useRef(null);
 
   const filteredNodes = useMemo(() => {
     if (searchQuery.trim()) {
@@ -22,6 +25,41 @@ export default function NodesCarousel({ onNodeDragStart }) {
       onNodeDragStart(node);
     }
   };
+
+  // Auto-scroll effect - smooth continuous upward scroll
+  useEffect(() => {
+    if (!isAutoScrollActive || !nodesListRef.current) return;
+
+    let lastTime = performance.now();
+    const scrollSpeed = 0.02; // pixels per millisecond (very slow for subtle effect)
+
+    const animate = (currentTime) => {
+      const deltaTime = currentTime - lastTime;
+      lastTime = currentTime;
+
+      if (nodesListRef.current && isAutoScrollActive) {
+        const container = nodesListRef.current;
+        const newScrollTop = container.scrollTop + (scrollSpeed * deltaTime);
+        
+        // Reset scroll to create infinite loop effect
+        if (newScrollTop >= container.scrollHeight / 3) {
+          container.scrollTop = 0;
+        } else {
+          container.scrollTop = newScrollTop;
+        }
+      }
+
+      animationFrameRef.current = requestAnimationFrame(animate);
+    };
+
+    animationFrameRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [isAutoScrollActive]);
 
   // Scroll category horizontally
   const scrollToCategory = (dir) => {
@@ -115,7 +153,12 @@ export default function NodesCarousel({ onNodeDragStart }) {
         </div>
 
         {/* Scrollable Nodes List */}
-        <div className="flex-1 overflow-y-auto scrollbar-hide px-3 py-3">
+        <div 
+          ref={nodesListRef}
+          className="flex-1 overflow-y-auto scrollbar-hide px-3 py-3"
+          onMouseEnter={() => setIsAutoScrollActive(false)}
+          onMouseLeave={() => setIsAutoScrollActive(true)}
+        >
           {filteredNodes.length === 0 ? (
             <div className="text-center py-12">
               <div className="w-16 h-16 mx-auto mb-3 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center">
@@ -172,6 +215,7 @@ export default function NodesCarousel({ onNodeDragStart }) {
         .scrollbar-hide {
           -ms-overflow-style: none;
           scrollbar-width: none;
+          scroll-behavior: auto;
         }
         .scrollbar-hide::-webkit-scrollbar {
           display: none;
