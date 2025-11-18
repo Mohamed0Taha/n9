@@ -1065,7 +1065,14 @@ function WorkflowCanvas(
             executionStatus: nodeExecutionStatus[node.id]
           }
         }))}
-        edges={edges}
+        edges={edges.map(edge => ({
+          ...edge,
+          data: {
+            ...edge.data,
+            sourceStatus: nodeExecutionStatus[edge.source],
+            targetStatus: nodeExecutionStatus[edge.target]
+          }
+        }))}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
