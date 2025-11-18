@@ -59,6 +59,33 @@ class WorkflowController extends Controller
         ]);
 
         $workflow->fill($request->only('name', 'description', 'status'));
+        
+        // Extract schedule configuration from graph if present
+        if (isset($data['graph'])) {
+            $scheduleConfig = $this->extractScheduleConfig($data['graph']);
+            if ($scheduleConfig) {
+                $workflow->is_scheduled = true;
+                $workflow->schedule_interval = $scheduleConfig['interval'];
+                $workflow->schedule_timezone = $scheduleConfig['timezone'] ?? 'UTC';
+                
+                // Set initial next run time if not already set
+                if (!$workflow->next_scheduled_run) {
+                    $workflow->next_scheduled_run = \Carbon\Carbon::now($workflow->schedule_timezone);
+                }
+                
+                \Log::info('Schedule configured for workflow', [
+                    'workflow_id' => $workflow->id,
+                    'interval' => $workflow->schedule_interval,
+                    'timezone' => $workflow->schedule_timezone,
+                    'next_run' => $workflow->next_scheduled_run,
+                ]);
+            } else {
+                $workflow->is_scheduled = false;
+                $workflow->schedule_interval = null;
+                $workflow->next_scheduled_run = null;
+            }
+        }
+        
         $workflow->save();
 
         if (isset($data['graph'])) {
@@ -103,5 +130,40 @@ class WorkflowController extends Controller
                 'runs' => fn ($query) => $query->latest()->limit(5),
             ]),
         ]);
+    }
+    
+    /**
+     * Extract schedule configuration from workflow graph
+     */
+    private function extractScheduleConfig(array $graph): ?array
+    {
+        if (!isset($graph['nodes']) || !is_array($graph['nodes'])) {
+            return null;
+        }
+        
+        // Look for Schedule nodes in the graph
+        foreach ($graph['nodes'] as $node) {
+            $nodeName = $node['data']['name'] ?? $node['data']['label'] ?? null;
+            $nodeType = $node['data']['type'] ?? $nodeName;
+            
+            if ($nodeName === 'Schedule' || $nodeType === 'Schedule') {
+                $parameters = $node['data']['parameters'] ?? [];
+                
+                // Check if schedule is enabled
+                if (isset($parameters['enabled']) && $parameters['enabled'] === false) {
+                    return null;
+                }
+                
+                return [
+                    'interval' => $parameters['interval'] ?? 'Every Hour',
+                    'timezone' => $parameters['timezone'] ?? 'UTC',
+                    'startTime' => $parameters['startTime'] ?? null,
+                    'dayOfWeek' => $parameters['dayOfWeek'] ?? null,
+                    'dayOfMonth' => $parameters['dayOfMonth'] ?? null,
+                ];
+            }
+        }
+        
+        return null;
     }
 }

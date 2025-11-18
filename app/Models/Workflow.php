@@ -18,10 +18,18 @@ class Workflow extends Model
         'description',
         'status',
         'metadata',
+        'is_scheduled',
+        'schedule_interval',
+        'schedule_timezone',
+        'last_scheduled_run',
+        'next_scheduled_run',
     ];
 
     protected $casts = [
         'metadata' => 'array',
+        'is_scheduled' => 'boolean',
+        'last_scheduled_run' => 'datetime',
+        'next_scheduled_run' => 'datetime',
     ];
 
     public function organization(): BelongsTo
