@@ -33,14 +33,11 @@ function N8nStyleNode({ data, selected, id, onOpenSettings }) {
   const nodeIcon = isBundle ? '📦' : nodeStyle.icon;
   const nodeBgGradient = nodeStyle.bgGradient;
   
-  const hasError = data.status === 'error';
-  const isRunning = data.status === 'running';
-  const isSuccess = data.status === 'success';
-  
   // Execution status from real-time data
   const executionStatus = data.executionStatus;
   const isExecuting = executionStatus === 'running';
   const hasExecuted = executionStatus === 'success';
+  const hasError = executionStatus === 'error' || executionStatus === 'failed';
   const executionTime = data.executionTime;
   const executionData = data.executionData;
 
@@ -215,7 +212,7 @@ function N8nStyleNode({ data, selected, id, onOpenSettings }) {
           <div
             className={`flex items-center justify-center ${
               isBundle ? 'w-12 h-12' : 'w-14 h-14'
-            } rounded-xl text-3xl flex-shrink-0 border-3 border-black shadow-lg`}
+            } rounded-xl text-3xl flex-shrink-0 border-3 border-black shadow-lg relative`}
             style={{
               backgroundColor: 'white',
               color: '#000',
@@ -241,6 +238,34 @@ function N8nStyleNode({ data, selected, id, onOpenSettings }) {
               </svg>
             ) : (
               nodeIcon
+            )}
+            
+            {/* Spinner overlay when executing */}
+            {isExecuting && (
+              <div className="absolute inset-0 flex items-center justify-center bg-white/90 rounded-xl">
+                <svg className="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </div>
+            )}
+            
+            {/* Success checkmark when completed */}
+            {hasExecuted && !isExecuting && (
+              <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-1 border-2 border-black" style={{ boxShadow: '2px 2px 0px #000' }}>
+                <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            )}
+            
+            {/* Error indicator when failed */}
+            {hasError && !isExecuting && (
+              <div className="absolute -top-1 -right-1 bg-red-500 rounded-full p-1 border-2 border-black" style={{ boxShadow: '2px 2px 0px #000' }}>
+                <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
             )}
           </div>
           <div className="flex-1 min-w-0">

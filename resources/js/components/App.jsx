@@ -442,7 +442,8 @@ export default function App() {
             };
         });
         
-        setExecutionMessage({ type: 'info', text: '⚡ Starting workflow execution...' });
+        // Don't show global message - users will see spinners on individual nodes
+        setExecutionMessage(null);
 
         try {
             await axios.post(`/app/workflows/${selectedWorkflow.id}/execute`);
