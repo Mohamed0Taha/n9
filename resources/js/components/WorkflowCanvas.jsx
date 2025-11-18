@@ -1058,21 +1058,76 @@ function WorkflowCanvas(
       </button>
       
       <ReactFlow
-        nodes={nodes.map(node => ({
-          ...node,
-          data: {
-            ...node.data,
-            executionStatus: nodeExecutionStatus[node.id]
+        nodes={nodes.map(node => {
+          let executionStatus = nodeExecutionStatus[node.id];
+          
+          // For bundle nodes, aggregate status from bundled nodes
+          if (node.type === 'bundle' && node.data?.bundledNodes) {
+            const bundledNodeIds = node.data.bundledNodes.map(n => n.id);
+            const bundledStatuses = bundledNodeIds
+              .map(id => nodeExecutionStatus[id])
+              .filter(status => status); // Filter out undefined statuses
+            
+            if (bundledStatuses.length > 0) {
+              // If ANY child is running, bundle is running
+              if (bundledStatuses.some(s => s === 'running')) {
+                executionStatus = 'running';
+                console.log(`📦 Bundle ${node.id} is RUNNING (child node executing)`);
+              }
+              // If ANY child has error, bundle has error
+              else if (bundledStatuses.some(s => s === 'error' || s === 'failed')) {
+                executionStatus = 'error';
+                console.log(`📦 Bundle ${node.id} has ERROR (child node failed)`);
+              }
+              // If ALL children are success, bundle is success
+              else if (bundledStatuses.every(s => s === 'success') && bundledStatuses.length === bundledNodeIds.length) {
+                executionStatus = 'success';
+                console.log(`📦 Bundle ${node.id} is SUCCESS (all children completed)`);
+              }
+            }
           }
-        }))}
-        edges={edges.map(edge => ({
-          ...edge,
-          data: {
-            ...edge.data,
-            sourceStatus: nodeExecutionStatus[edge.source],
-            targetStatus: nodeExecutionStatus[edge.target]
-          }
-        }))}
+          
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              executionStatus
+            }
+          };
+        })}
+        edges={edges.map(edge => {
+          // Helper function to get aggregated status for bundles
+          const getNodeStatus = (nodeId) => {
+            const node = nodes.find(n => n.id === nodeId);
+            
+            // If it's a bundle, aggregate child statuses
+            if (node?.type === 'bundle' && node.data?.bundledNodes) {
+              const bundledNodeIds = node.data.bundledNodes.map(n => n.id);
+              const bundledStatuses = bundledNodeIds
+                .map(id => nodeExecutionStatus[id])
+                .filter(status => status);
+              
+              if (bundledStatuses.length > 0) {
+                if (bundledStatuses.some(s => s === 'running')) return 'running';
+                if (bundledStatuses.some(s => s === 'error' || s === 'failed')) return 'error';
+                if (bundledStatuses.every(s => s === 'success') && bundledStatuses.length === bundledNodeIds.length) return 'success';
+              }
+              return undefined;
+            }
+            
+            // Regular node - return its status directly
+            return nodeExecutionStatus[nodeId];
+          };
+          
+          return {
+            ...edge,
+            data: {
+              ...edge.data,
+              sourceStatus: getNodeStatus(edge.source),
+              targetStatus: getNodeStatus(edge.target)
+            }
+          };
+        })}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
