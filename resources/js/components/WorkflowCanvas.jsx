@@ -104,36 +104,52 @@ function WorkflowCanvas(
     }
     
     const nodeResults = executionData.node_results;
-    console.log('🔄 Updating nodes with execution status:', {
+    console.log('🔄 Checking for execution status changes:', {
       totalNodes: Object.keys(nodeResults).length,
       statuses: Object.entries(nodeResults).map(([id, r]) => ({ id, status: r.status }))
     });
     
-    setNodes((currentNodes) =>
-      currentNodes.map((node) => {
+    // Use functional update to check changes and only update if needed
+    setNodes((currentNodes) => {
+      const nodesToUpdate = new Set();
+      
+      // Check which nodes actually changed status
+      currentNodes.forEach((node) => {
         const result = nodeResults[node.id];
-        if (!result) {
+        if (result && node.data?.executionStatus !== result.status) {
+          nodesToUpdate.add(node.id);
+          
+          if (result.status === 'running') {
+            console.log(`🔵 Node ${node.id} is RUNNING`);
+          } else if (result.status === 'success') {
+            console.log(`✅ Node ${node.id} completed successfully`);
+          } else if (result.status === 'error') {
+            console.log(`❌ Node ${node.id} failed`);
+          }
+        }
+      });
+      
+      // If no nodes changed, return the same array reference (no re-render!)
+      if (nodesToUpdate.size === 0) {
+        console.log('⏭️ No status changes detected, skipping update');
+        return currentNodes;
+      }
+      
+      console.log(`🔄 Updating ${nodesToUpdate.size} nodes with changed status`);
+      
+      // Only update nodes that changed
+      return currentNodes.map((node) => {
+        // If this node doesn't need updating, return exact same object
+        if (!nodesToUpdate.has(node.id)) {
           return node;
         }
         
-        // Skip update if status hasn't changed (prevents jumping!)
-        if (node.data?.executionStatus === result.status) {
-          return node;
-        }
-        
-        if (result.status === 'running') {
-          console.log(`🔵 Node ${node.id} is RUNNING`);
-        } else if (result.status === 'success') {
-          console.log(`✅ Node ${node.id} completed successfully`);
-        } else if (result.status === 'error') {
-          console.log(`❌ Node ${node.id} failed`);
-        }
-        
-        // Only update data and className, PRESERVE POSITION!
+        const result = nodeResults[node.id];
         const baseClassName = node.className?.replace(/execution-\w+/g, '').trim() || '';
+        
+        // Return new object ONLY for nodes that changed
         return {
           ...node,
-          position: node.position, // Explicitly preserve position
           data: {
             ...node.data,
             executionStatus: result.status,
@@ -142,8 +158,8 @@ function WorkflowCanvas(
           },
           className: `${baseClassName} execution-${result.status}`.trim(),
         };
-      })
-    );
+      });
+    });
   }, [executionData, setNodes]);
 
   const updateSelectionState = useCallback(
