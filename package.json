@@ -12,6 +12,7 @@
         "react-dom": "^18.3.1",
         "reactflow": "^11.10.6",
         "zustand": "^5.0.1",
+        "lucide-react": "^0.454.0",
         "@rollup/rollup-linux-x64-gnu": "^4.53.2",
         "@tailwindcss/vite": "^4.0.0",
         "@vitejs/plugin-react": "^4.3.3",
