@@ -14,6 +14,16 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Trust Heroku proxies for proper HTTPS detection
         $middleware->trustProxies(at: '*');
+        
+        // Track guest usage and enforce 1-hour session limit
+        $middleware->web(append: [
+            \App\Http\Middleware\TrackGuestUsage::class,
+        ]);
+        
+        // Register middleware alias for route-specific usage
+        $middleware->alias([
+            'require.auth.save' => \App\Http\Middleware\RequireAuthForSave::class,
+        ]);
     })
     ->withSchedule(function (Schedule $schedule): void {
         // Run scheduled workflows check every minute
