@@ -1,6 +1,7 @@
 // Complete n8n nodes library extracted from the n8n repository
 export const n8nNodes = [
-  { id: 'start', name: 'Start', category: 'Core', icon: '▶️', color: '#22c55e', description: 'Workflow trigger' },
+  { id: 'manual-trigger', name: 'Manual Trigger', category: 'Core', icon: '👆', color: '#22c55e', description: 'Trigger workflow manually' },
+  { id: 'schedule', name: 'Schedule', category: 'Core', icon: '⏰', color: '#10b981', description: 'Schedule workflow execution' },
   { id: 'http-request', name: 'HTTP Request', category: 'Core', icon: '🌐', color: '#3b82f6', description: 'Make HTTP requests' },
   { id: 'webhook', name: 'Webhook', category: 'Core', icon: '🪝', color: '#8b5cf6', description: 'Receive webhook data' },
   { id: 'code', name: 'Code', category: 'Core', icon: '💻', color: '#f59e0b', description: 'Execute custom code' },
@@ -110,6 +111,7 @@ export const n8nNodes = [
 ];
 
 export const nodeCategories = [
+  'All',
   'Core',
   'Flow',
   'Communication',

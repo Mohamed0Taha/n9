@@ -756,6 +756,7 @@ export default function App() {
                     </div>
                     <button
                         type="button"
+                        data-execute-workflow="true"
                         onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();

@@ -2,6 +2,124 @@
 // Each node type has unique parameters matching n8n's implementation
 
 export const nodeConfigurations = {
+    // ========== TRIGGER NODES ==========
+    'Manual Trigger': {
+        inputs: [], // No inputs - this is a trigger
+        outputs: [
+            { type: 'main', label: 'On Trigger' }
+        ],
+        sections: [
+            {
+                title: 'Trigger Configuration',
+                fields: [
+                    { 
+                        name: 'description', 
+                        label: 'Description', 
+                        type: 'textarea', 
+                        rows: 3, 
+                        placeholder: 'Describe what this manual trigger does...',
+                        description: 'Add a description for this trigger'
+                    },
+                ]
+            }
+        ]
+    },
+    
+    'Schedule': {
+        inputs: [], // No inputs - this is a trigger
+        outputs: [
+            { type: 'main', label: 'On Schedule' }
+        ],
+        sections: [
+            {
+                title: 'Schedule Settings',
+                fields: [
+                    { 
+                        name: 'interval', 
+                        label: 'Run Interval', 
+                        type: 'select', 
+                        options: [
+                            'Every 10 Minutes',
+                            'Every 15 Minutes',
+                            'Every 30 Minutes',
+                            'Every Hour',
+                            'Every 2 Hours',
+                            'Every 6 Hours',
+                            'Every 12 Hours',
+                            'Daily',
+                            'Weekly',
+                            'Monthly'
+                        ], 
+                        default: 'Every Hour',
+                        description: 'How often should this workflow run?'
+                    },
+                    { 
+                        name: 'startTime', 
+                        label: 'Start Time (Optional)', 
+                        type: 'text', 
+                        placeholder: '09:00',
+                        description: 'Specific time to start (HH:MM format)'
+                    },
+                    { 
+                        name: 'dayOfWeek', 
+                        label: 'Day of Week (For Weekly)', 
+                        type: 'select', 
+                        options: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], 
+                        default: 'Monday',
+                        description: 'Which day should it run?'
+                    },
+                    { 
+                        name: 'dayOfMonth', 
+                        label: 'Day of Month (For Monthly)', 
+                        type: 'number', 
+                        min: 1,
+                        max: 31,
+                        default: 1,
+                        description: 'Which day of the month?'
+                    },
+                    { 
+                        name: 'timezone', 
+                        label: 'Timezone', 
+                        type: 'select', 
+                        options: [
+                            'UTC',
+                            'America/New_York',
+                            'America/Los_Angeles',
+                            'America/Chicago',
+                            'Europe/London',
+                            'Europe/Paris',
+                            'Asia/Tokyo',
+                            'Asia/Shanghai',
+                            'Australia/Sydney'
+                        ], 
+                        default: 'UTC',
+                        description: 'Timezone for the schedule'
+                    },
+                ]
+            },
+            {
+                title: 'Additional Options',
+                fields: [
+                    { 
+                        name: 'enabled', 
+                        label: 'Enabled', 
+                        type: 'checkbox', 
+                        default: true,
+                        description: 'Enable or disable this schedule'
+                    },
+                    { 
+                        name: 'description', 
+                        label: 'Description', 
+                        type: 'textarea', 
+                        rows: 3, 
+                        placeholder: 'Describe what this schedule does...',
+                        description: 'Add a description for this schedule'
+                    },
+                ]
+            }
+        ]
+    },
+    
     // ========== CORE NODES ==========
     'HTTP Request': {
         inputs: [

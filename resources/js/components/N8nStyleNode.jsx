@@ -309,9 +309,35 @@ const N8nStyleNode = ({ data, selected, id, onOpenSettings }) => {
           </button>
         </div>
 
-        {/* Body - Parameters/Settings Preview / Bundle contents */}
+        {/* Body - Parameters/Settings Preview / Bundle contents / Trigger Button */}
         <div className="px-4 py-3 bg-white/90">
-          {isBundle ? (
+          {nodeName === 'Manual Trigger' || nodeType === 'Manual Trigger' ? (
+            <div className="flex flex-col items-center gap-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // Trigger the workflow execution
+                  const executeBtn = document.querySelector('[data-execute-workflow]');
+                  if (executeBtn) {
+                    console.log('🎬 Manual Trigger button clicked - executing workflow');
+                    executeBtn.click();
+                  }
+                }}
+                className="tactile-button w-full bg-gradient-to-r from-lime-400 to-emerald-400 text-black px-4 py-3 rounded-lg font-bold border-3 border-black hover:from-lime-500 hover:to-emerald-500 active:from-lime-600 active:to-emerald-600 transition-colors"
+                style={{ boxShadow: '3px 3px 0px #000', fontFamily: "'Bangers', cursive", letterSpacing: '1px' }}
+              >
+                <span className="flex items-center justify-center gap-2 text-base">
+                  <span className="text-xl">👆</span>
+                  TRIGGER WORKFLOW!
+                </span>
+              </button>
+              {data.parameters?.description && (
+                <div className="text-xs text-slate-600 text-center italic px-2">
+                  {data.parameters.description}
+                </div>
+              )}
+            </div>
+          ) : isBundle ? (
             <div className="space-y-2">
               <div className="text-xs font-bold text-black mb-1">BUNDLED NODES:</div>
               {data.bundledNodes?.slice(0, 3).map((node, idx) => (
