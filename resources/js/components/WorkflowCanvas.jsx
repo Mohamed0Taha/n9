@@ -674,20 +674,23 @@ function WorkflowCanvas(
   useEffect(() => {
     const handleKeyDown = (event) => {
       // Don't trigger shortcuts when typing in input fields
-      const isInputFocused = 
-        event.target.tagName === 'INPUT' || 
-        event.target.tagName === 'TEXTAREA' ||
-        event.target.isContentEditable;
+      const isInputFocused = document.activeElement.tagName === 'INPUT' || 
+                            document.activeElement.tagName === 'TEXTAREA' ||
+                            document.activeElement.isContentEditable;
 
-      // Delete/Backspace - Delete selected nodes
-      if ((event.key === 'Delete' || event.key === 'Backspace') && selectedNodes.length > 0 && !isInputFocused) {
-        event.preventDefault();
-        handleDeleteSelectedNodes();
+      // Delete key - Delete selected nodes
+      if (event.key === 'Delete' || event.key === 'Backspace') {
+        if (selectedNodes.length > 0 && !isInputFocused) {
+          event.preventDefault();
+          handleDeleteSelectedNodes();
+        }
       }
 
       // Ctrl/Cmd + A - Select all nodes
       if ((event.ctrlKey || event.metaKey) && event.key === 'a' && !isInputFocused) {
         event.preventDefault();
+        // Select all nodes
+        setNodes((nds) => nds.map((node) => ({ ...node, selected: true })));
         updateSelectionState(nodes);
       }
 
@@ -717,7 +720,7 @@ function WorkflowCanvas(
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedNodes, nodes, handleDeleteSelectedNodes, handleCopyNodes, handlePasteNodes, handleDuplicateSelectedNodes, updateSelectionState]);
+  }, [selectedNodes, nodes, handleDeleteSelectedNodes, handleCopyNodes, handlePasteNodes, handleDuplicateSelectedNodes, updateSelectionState, setNodes]);
 
   const handleNodeSettingsOpen = useCallback(
     (nodeProps) => {
@@ -1142,6 +1145,7 @@ function WorkflowCanvas(
         snapToGrid={true}
         snapGrid={[15, 15]}
         defaultEdgeOptions={edgeOptions}
+        defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
         connectionRadius={10}
         multiSelectionKeyCode="Shift"
         selectionKeyCode="Shift"

@@ -1008,8 +1008,10 @@ export default function App() {
 
             {/* Main Content */}
             <main className="flex-1 flex overflow-hidden">
-                {/* Nodes Carousel */}
-                {isSidebarOpen && <NodesCarousel />}
+                {/* Nodes Carousel with transition */}
+                <div className={`transition-all duration-300 ease-in-out ${isSidebarOpen ? 'w-96 opacity-100' : 'w-0 opacity-0'} overflow-hidden`}>
+                    {isSidebarOpen && <NodesCarousel />}
+                </div>
 
                 {/* Canvas Area */}
                 <div className="flex-1 relative">
