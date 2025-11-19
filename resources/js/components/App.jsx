@@ -816,12 +816,12 @@ export default function App() {
                                 </div>
 
                                 {/* User Avatar and Name */}
-                                <div className="flex items-center gap-2 bg-white px-3 h-16 rounded-lg border-3 border-black"
+                                <div className="flex items-center gap-2 bg-white px-3 h-16 rounded-lg border-3 border-black max-w-[150px] sm:max-w-[200px]"
                                      style={{ boxShadow: '3px 3px 0px #000' }}>
                                     {user.avatar && (
-                                        <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full border-2 border-black" />
+                                        <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full border-2 border-black flex-shrink-0" />
                                     )}
-                                    <span className="font-medium text-sm">{user.name}</span>
+                                    <span className="font-medium text-sm truncate">{user.name}</span>
                                 </div>
 
                                 {/* Logout Button */}
