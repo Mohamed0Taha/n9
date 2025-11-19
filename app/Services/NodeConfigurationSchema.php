@@ -349,11 +349,20 @@ class NodeConfigurationSchema
             ],
 
             'Schedule' => [
-                'required' => ['triggerOn'],
+                'required' => ['rule'],
                 'defaults' => [
-                    'triggerOn' => 'interval',
-                    'interval' => 5,
-                    'unit' => 'minutes',
+                    'rule' => [
+                        'interval' => [
+                            ['field' => 'hours'],
+                        ],
+                    ],
+                ],
+            ],
+
+            'RSS Feed' => [
+                'required' => ['url'],
+                'defaults' => [
+                    'url' => 'https://example.com/feed.xml',
                 ],
             ],
         ];

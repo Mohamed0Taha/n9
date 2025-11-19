@@ -34,16 +34,25 @@ class N8nFormatConverter
         }
 
         // Convert connections to edges
+        // n8n structure: connections[nodeName][outputType][outputIndex][connectionIndex]
         foreach ($n8nWorkflow['connections'] ?? [] as $sourceNode => $outputs) {
-            foreach ($outputs as $outputIndex => $connections) {
-                foreach ($connections as $connection) {
-                    $edges[] = [
-                        'id' => $sourceNode . '-' . $connection['node'],
-                        'source' => $sourceNode,
-                        'target' => $connection['node'],
-                        'sourceOutput' => $outputIndex,
-                        'targetInput' => $connection['type'] ?? 'main',
-                    ];
+            foreach ($outputs as $outputType => $outputArray) {
+                // Each output type (e.g., "main") has an array of connection arrays
+                foreach ($outputArray as $outputIndex => $connections) {
+                    // Each connections entry is an array of connection objects
+                    if (is_array($connections)) {
+                        foreach ($connections as $connection) {
+                            if (isset($connection['node'])) {
+                                $edges[] = [
+                                    'id' => $sourceNode . '-' . $connection['node'],
+                                    'source' => $this->findNodeIdByName($n8nWorkflow['nodes'] ?? [], $sourceNode),
+                                    'target' => $this->findNodeIdByName($n8nWorkflow['nodes'] ?? [], $connection['node']),
+                                    'sourceOutput' => $outputType,
+                                    'targetInput' => $connection['type'] ?? 'main',
+                                ];
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -126,6 +135,20 @@ class N8nFormatConverter
     }
 
     /**
+     * Find node ID by node name (n8n uses names in connections)
+     */
+    private static function findNodeIdByName(array $nodes, string $name): string
+    {
+        foreach ($nodes as $node) {
+            if (($node['name'] ?? '') === $name) {
+                return $node['id'] ?? $name;
+            }
+        }
+        // If not found, return the name itself as fallback
+        return $name;
+    }
+
+    /**
      * Map n8n node types to our node types
      */
     private static function mapN8nNodeType(string $n8nType): string
@@ -133,6 +156,7 @@ class N8nFormatConverter
         $mapping = [
             'n8n-nodes-base.manualTrigger' => 'Start',
             'n8n-nodes-base.start' => 'Start',
+            'n8n-nodes-base.scheduleTrigger' => 'Schedule',
             'n8n-nodes-base.httpRequest' => 'HTTP Request',
             'n8n-nodes-base.webhook' => 'Webhook',
             'n8n-nodes-base.code' => 'Code',
@@ -152,6 +176,7 @@ class N8nFormatConverter
             'n8n-nodes-base.googleSheets' => 'Google Sheets',
             'n8n-nodes-base.googleDrive' => 'Google Drive',
             'n8n-nodes-base.airtable' => 'Airtable',
+            'n8n-nodes-base.rssFeedRead' => 'RSS Feed',
             'n8n-nodes-base.mysql' => 'MySQL',
             'n8n-nodes-base.postgres' => 'PostgreSQL',
             'n8n-nodes-base.mongoDb' => 'MongoDB',
@@ -174,6 +199,7 @@ class N8nFormatConverter
     {
         $mapping = [
             'Start' => 'n8n-nodes-base.manualTrigger',
+            'Schedule' => 'n8n-nodes-base.scheduleTrigger',
             'HTTP Request' => 'n8n-nodes-base.httpRequest',
             'Webhook' => 'n8n-nodes-base.webhook',
             'Code' => 'n8n-nodes-base.code',
@@ -193,6 +219,7 @@ class N8nFormatConverter
             'Google Sheets' => 'n8n-nodes-base.googleSheets',
             'Google Drive' => 'n8n-nodes-base.googleDrive',
             'Airtable' => 'n8n-nodes-base.airtable',
+            'RSS Feed' => 'n8n-nodes-base.rssFeedRead',
             'MySQL' => 'n8n-nodes-base.mysql',
             'PostgreSQL' => 'n8n-nodes-base.postgres',
             'MongoDB' => 'n8n-nodes-base.mongoDb',

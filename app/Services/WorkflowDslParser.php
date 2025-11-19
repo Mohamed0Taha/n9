@@ -11,7 +11,7 @@ class WorkflowDslParser
      * Valid node types that can be used in workflows - exact names from sidebar
      */
     private const VALID_NODE_TYPES = [
-        'Start', 'HTTP Request', 'Webhook', 'Code', 'Function',
+        'Start', 'Schedule', 'HTTP Request', 'Webhook', 'Code', 'Function',
         'IF', 'Switch', 'Merge', 'Split In Batches',
         'Slack', 'Discord', 'Telegram', 'Gmail', 'Microsoft Teams', 'Twilio', 'WhatsApp',
         'Notion', 'Google Sheets', 'Google Drive', 'Airtable', 'Asana', 'Trello', 'Monday', 'Jira', 'ClickUp', 'Todoist',
