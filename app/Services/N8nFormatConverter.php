@@ -45,8 +45,8 @@ class N8nFormatConverter
                             if (isset($connection['node'])) {
                                 $edges[] = [
                                     'id' => $sourceNode . '-' . $connection['node'],
-                                    'source' => $this->findNodeIdByName($n8nWorkflow['nodes'] ?? [], $sourceNode),
-                                    'target' => $this->findNodeIdByName($n8nWorkflow['nodes'] ?? [], $connection['node']),
+                                    'source' => self::findNodeIdByName($n8nWorkflow['nodes'] ?? [], $sourceNode),
+                                    'target' => self::findNodeIdByName($n8nWorkflow['nodes'] ?? [], $connection['node']),
                                     'sourceOutput' => $outputType,
                                     'targetInput' => $connection['type'] ?? 'main',
                                 ];
