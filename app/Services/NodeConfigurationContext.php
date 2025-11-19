@@ -442,7 +442,8 @@ Return ONLY valid minified JSON (no markdown fences, no explanations):
         "url": "https://api.example.com/data",
         "authentication": "None",
         "queryParameters": {},
-        "headers": {}
+        "headers": {},
+        "timeout": 30000
       }
     },
     {
@@ -467,8 +468,15 @@ Return ONLY valid minified JSON (no markdown fences, no explanations):
   ]
 }
 
-CRITICAL: The "type" field MUST exactly match one of the available node names (e.g., "HTTP Request", "Slack", "OpenAI", "Gmail", etc.)
-The "data" object MUST contain the actual configuration parameters for that node type.
+⚠️ CRITICAL REQUIREMENTS:
+1. The "type" field MUST exactly match one of the available node names (e.g., "HTTP Request", "Slack", "OpenAI", "Gmail", etc.)
+2. The "data" object MUST contain ALL required configuration parameters for that node type
+3. NEVER leave configuration fields empty or with placeholder values like "TODO" or "configure-me"
+4. Use realistic, working values that demonstrate proper usage
+5. For URLs: use real example endpoints (https://api.example.com/endpoint)
+6. For emails: use example.com addresses (user@example.com)
+7. For API keys: use descriptive placeholders (your-api-key-here)
+8. Include ALL required fields from the configuration examples above
 
 ## Guidelines
 1. **Use Real Configurations**: Always include proper data fields with realistic values
@@ -480,24 +488,155 @@ The "data" object MUST contain the actual configuration parameters for that node
 7. **Node IDs**: Use descriptive prefixes (e.g., "http_1", "slack_2", "openai_3")
 8. **Data Flow**: Ensure each node has necessary input from previous nodes
 
-## Example Configuration Patterns
+## COMPLETE CONFIGURATION EXAMPLES (COPY THESE PATTERNS)
 
-### API Call + AI Processing + Notification:
-- HTTP Request (GET data) → OpenAI (process) → Slack (notify)
-- Config HTTP: {method: "GET", url: "https://api.example.com/data"}
-- Config OpenAI: {model: "gpt-4o-mini", prompt: "Analyze: {{$json.data}}"}
-- Config Slack: {channel: "#alerts", text: "Result: {{$json.output}}"}
+### Example 1: API Call + AI Processing + Notification
+```json
+{
+  "nodes": [
+    {
+      "id": "start_1",
+      "type": "Start",
+      "label": "Start",
+      "data": {"description": "Trigger workflow"}
+    },
+    {
+      "id": "http_1",
+      "type": "HTTP Request",
+      "label": "Fetch Data",
+      "data": {
+        "method": "GET",
+        "url": "https://api.openweathermap.org/data/2.5/weather?q=London&appid=your-api-key",
+        "authentication": "None",
+        "queryParameters": {},
+        "headers": {},
+        "timeout": 30000
+      }
+    },
+    {
+      "id": "openai_1",
+      "type": "OpenAI",
+      "label": "Analyze Weather",
+      "data": {
+        "resource": "Chat",
+        "model": "gpt-4o-mini",
+        "temperature": 0.7,
+        "maxTokens": 500,
+        "systemMessage": "You are a weather analyst.",
+        "prompt": "Summarize this weather data: {{ $json.body }}"
+      }
+    },
+    {
+      "id": "slack_1",
+      "type": "Slack",
+      "label": "Notify Team",
+      "data": {
+        "resource": "Message",
+        "operation": "Post",
+        "channel": "#weather-alerts",
+        "text": "Weather Update: {{ $json.output }}",
+        "username": "Weather Bot",
+        "icon_emoji": "🌤️"
+      }
+    }
+  ],
+  "edges": [
+    {"source": "start_1", "target": "http_1"},
+    {"source": "http_1", "target": "openai_1"},
+    {"source": "openai_1", "target": "slack_1"}
+  ]
+}
+```
 
-### Database Query + Spreadsheet Update:
-- Schedule (trigger) → MySQL (query) → Google Sheets (append)
-- Config MySQL: {operation: "Execute Query", query: "SELECT * FROM users WHERE active = ?"}
-- Config Sheets: {operation: "Append", spreadsheetId: "abc123", range: "Sheet1!A:Z"}
+### Example 2: Database Query + Spreadsheet Update
+```json
+{
+  "nodes": [
+    {
+      "id": "schedule_1",
+      "type": "Schedule",
+      "label": "Daily Trigger",
+      "data": {
+        "triggerOn": "cron",
+        "cronExpression": "0 9 * * *"
+      }
+    },
+    {
+      "id": "mysql_1",
+      "type": "MySQL",
+      "label": "Get Active Users",
+      "data": {
+        "operation": "Execute Query",
+        "query": "SELECT id, name, email, created_at FROM users WHERE active = ? ORDER BY created_at DESC LIMIT 100"
+      }
+    },
+    {
+      "id": "sheets_1",
+      "type": "Google Sheets",
+      "label": "Update Spreadsheet",
+      "data": {
+        "resource": "Spreadsheet",
+        "operation": "Append",
+        "spreadsheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
+        "range": "Users!A:D",
+        "dataMode": "Auto-Map"
+      }
+    }
+  ],
+  "edges": [
+    {"source": "schedule_1", "target": "mysql_1"},
+    {"source": "mysql_1", "target": "sheets_1"}
+  ]
+}
+```
 
-### Form Submission + CRM + Email:
-- Webhook (receive) → HubSpot (create contact) → Gmail (send)
-- Config Webhook: {httpMethod: "POST", responseMode: "On Received"}
-- Config HubSpot: {resource: "Contact", operation: "Create", email: "{{$json.email}}"}
-- Config Gmail: {to: "{{$json.email}}", subject: "Welcome!", message: "Thanks for signing up"}
+### Example 3: Form Submission + CRM + Email
+```json
+{
+  "nodes": [
+    {
+      "id": "webhook_1",
+      "type": "Webhook",
+      "label": "Receive Form",
+      "data": {
+        "httpMethod": "POST",
+        "path": "contact-form",
+        "responseMode": "On Received",
+        "responseCode": 200
+      }
+    },
+    {
+      "id": "hubspot_1",
+      "type": "HubSpot",
+      "label": "Create Contact",
+      "data": {
+        "resource": "Contact",
+        "operation": "Create",
+        "email": "{{ $json.body.email }}",
+        "firstName": "{{ $json.body.first_name }}",
+        "lastName": "{{ $json.body.last_name }}",
+        "properties": {}
+      }
+    },
+    {
+      "id": "gmail_1",
+      "type": "Gmail",
+      "label": "Send Welcome Email",
+      "data": {
+        "resource": "Message",
+        "operation": "Send",
+        "to": "{{ $json.body.email }}",
+        "subject": "Welcome to Our Platform!",
+        "message": "Hi {{ $json.body.first_name }}, thank you for signing up!"
+      }
+    }
+  ],
+  "edges": [
+    {"source": "webhook_1", "target": "hubspot_1"},
+    {"source": "hubspot_1", "target": "gmail_1"}
+  ]
+}
+```
 
 ## STRICT RULES - FOLLOW EXACTLY:
 

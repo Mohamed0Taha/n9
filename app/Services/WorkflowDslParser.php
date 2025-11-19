@@ -65,7 +65,26 @@ class WorkflowDslParser
                 ]);
             }
 
-            $nodes[$index]['data'] = $node['data'] ?? [];
+            // Validate and enhance node configuration
+            $nodeData = $node['data'] ?? [];
+            
+            // Get default configuration for this node type
+            $defaults = NodeConfigurationSchema::getDefaultConfig($nodeType);
+            
+            // Merge with defaults (user data takes precedence)
+            $nodeData = array_merge($defaults, $nodeData);
+            
+            // Validate required fields
+            $missing = NodeConfigurationSchema::validate($nodeType, $nodeData);
+            if (!empty($missing)) {
+                \Log::warning("Node '{$nodeType}' at index {$index} is missing required fields", [
+                    'missing_fields' => $missing,
+                    'node_id' => $node['id'] ?? 'unknown',
+                ]);
+                // Don't throw error, just log warning and use defaults
+            }
+            
+            $nodes[$index]['data'] = $nodeData;
         }
 
         $normalizedEdges = [];

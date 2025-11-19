@@ -129,11 +129,10 @@ class AiWorkflowGenerator
                 'id' => 'start_' . Str::random(5),
                 'type' => 'Start',
                 'label' => 'Start',
-                'data' => [
-                    'description' => "Manually triggered workflow: {$prompt}",
-                    'icon' => '▶️',
-                    'color' => '#10b981',
-                ],
+                'data' => array_merge(
+                    NodeConfigurationSchema::getDefaultConfig('Start'),
+                    ['description' => "Manually triggered workflow: {$prompt}"]
+                ),
             ],
         ];
 
@@ -144,14 +143,8 @@ class AiWorkflowGenerator
             $nodes[] = [
                 'id' => 'http_' . Str::random(5),
                 'type' => 'HTTP Request',
-                'label' => 'HTTP Request',
-                'data' => [
-                    'method' => 'GET',
-                    'url' => 'https://api.example.com/data',
-                    'authentication' => 'None',
-                    'icon' => '🌐',
-                    'color' => '#3b82f6',
-                ],
+                'label' => 'Fetch Data',
+                'data' => NodeConfigurationSchema::getDefaultConfig('HTTP Request'),
             ];
             $edges[] = [
                 'source' => $nodes[0]['id'],
@@ -164,17 +157,11 @@ class AiWorkflowGenerator
             $aiNode = [
                 'id' => 'openai_' . Str::random(5),
                 'type' => 'OpenAI',
-                'label' => 'OpenAI',
-                'data' => [
-                    'resource' => 'Chat',
-                    'model' => 'gpt-4o-mini',
-                    'temperature' => 0.7,
-                    'maxTokens' => 1000,
-                    'systemMessage' => 'You are a helpful assistant.',
-                    'prompt' => "Task: {$prompt}\n\nInput: {{{{ \$json.data }}}}",
-                    'icon' => '🤖',
-                    'color' => '#10a37f',
-                ],
+                'label' => 'Analyze with AI',
+                'data' => array_merge(
+                    NodeConfigurationSchema::getDefaultConfig('OpenAI'),
+                    ['prompt' => "Task: {$prompt}\n\nInput: {{ \$json.data }}"]
+                ),
             ];
             $nodes[] = $aiNode;
             $edges[] = [
@@ -188,17 +175,11 @@ class AiWorkflowGenerator
             $slackNode = [
                 'id' => 'slack_' . Str::random(5),
                 'type' => 'Slack',
-                'label' => 'Slack',
-                'data' => [
-                    'resource' => 'Message',
-                    'operation' => 'Post',
-                    'channel' => '#general',
-                    'text' => "Workflow result: {{{{ \$json.output }}}}",
-                    'username' => 'Workflow Bot',
-                    'icon_emoji' => ':robot_face:',
-                    'icon' => '💬',
-                    'color' => '#4a154b',
-                ],
+                'label' => 'Send Notification',
+                'data' => array_merge(
+                    NodeConfigurationSchema::getDefaultConfig('Slack'),
+                    ['text' => "Workflow result: {{ \$json.output }}"]
+                ),
             ];
             $nodes[] = $slackNode;
             $edges[] = [
@@ -212,16 +193,14 @@ class AiWorkflowGenerator
             $emailNode = [
                 'id' => 'gmail_' . Str::random(5),
                 'type' => 'Gmail',
-                'label' => 'Gmail',
-                'data' => [
-                    'resource' => 'Message',
-                    'operation' => 'Send',
-                    'to' => 'recipient@example.com',
-                    'subject' => "Workflow: {$prompt}",
-                    'message' => "Results: {{{{ \$json.output }}}}",
-                    'icon' => '📧',
-                    'color' => '#ea4335',
-                ],
+                'label' => 'Send Email',
+                'data' => array_merge(
+                    NodeConfigurationSchema::getDefaultConfig('Gmail'),
+                    [
+                        'subject' => "Workflow: {$prompt}",
+                        'message' => "Results: {{ \$json.output }}"
+                    ]
+                ),
             ];
             $nodes[] = $emailNode;
             $edges[] = [
@@ -235,13 +214,11 @@ class AiWorkflowGenerator
             $dbNode = [
                 'id' => 'mysql_' . Str::random(5),
                 'type' => 'MySQL',
-                'label' => 'MySQL',
-                'data' => [
-                    'operation' => 'Execute Query',
-                    'query' => 'SELECT * FROM table WHERE condition = ?',
-                    'icon' => '🗄️',
-                    'color' => '#00758f',
-                ],
+                'label' => 'Query Database',
+                'data' => array_merge(
+                    NodeConfigurationSchema::getDefaultConfig('MySQL'),
+                    ['query' => 'SELECT * FROM users WHERE status = ?']
+                ),
             ];
             $nodes[] = $dbNode;
             $edges[] = [
@@ -255,16 +232,8 @@ class AiWorkflowGenerator
             $sheetsNode = [
                 'id' => 'sheets_' . Str::random(5),
                 'type' => 'Google Sheets',
-                'label' => 'Google Sheets',
-                'data' => [
-                    'resource' => 'Spreadsheet',
-                    'operation' => 'Append',
-                    'spreadsheetId' => 'your-spreadsheet-id',
-                    'range' => 'Sheet1!A:Z',
-                    'dataMode' => 'Auto-Map',
-                    'icon' => '📊',
-                    'color' => '#0f9d58',
-                ],
+                'label' => 'Update Spreadsheet',
+                'data' => NodeConfigurationSchema::getDefaultConfig('Google Sheets'),
             ];
             $nodes[] = $sheetsNode;
             $edges[] = [
@@ -278,14 +247,8 @@ class AiWorkflowGenerator
             $nodes[] = [
                 'id' => 'http_' . Str::random(5),
                 'type' => 'HTTP Request',
-                'label' => 'HTTP Request',
-                'data' => [
-                    'method' => 'GET',
-                    'url' => 'https://api.example.com/endpoint',
-                    'authentication' => 'None',
-                    'icon' => '🌐',
-                    'color' => '#3b82f6',
-                ],
+                'label' => 'Fetch Data',
+                'data' => NodeConfigurationSchema::getDefaultConfig('HTTP Request'),
             ];
             $edges[] = [
                 'source' => $nodes[0]['id'],
