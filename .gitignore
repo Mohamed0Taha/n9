@@ -1,4 +1,5 @@
 *.log
+.dev-pids
 .DS_Store
 .env
 .env.backup
