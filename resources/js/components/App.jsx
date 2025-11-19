@@ -582,39 +582,41 @@ export default function App() {
         <>
         <div className="h-screen flex flex-col bg-yellow-100 overflow-hidden" style={{ fontFamily: "'Comic Neue', 'Bangers', cursive" }}>
             {/* Header */}
-            <header className="flex-shrink-0 px-6 py-4 bg-gradient-to-r from-yellow-400 via-orange-400 to-red-500 border-b-4 border-black flex items-center justify-between gap-4 z-10" style={{ boxShadow: '4px 4px 0px #000' }}>
-                <div className="flex items-center gap-4 flex-wrap">
+            <header className="flex-shrink-0 px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 bg-gradient-to-r from-yellow-400 via-orange-400 to-red-500 border-b-2 sm:border-b-4 border-black flex flex-wrap items-center justify-between gap-2 sm:gap-3 md:gap-4 z-10" style={{ boxShadow: '2px 2px 0px #000' }}>
+                <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
                     <button
                         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                        className="tactile-button p-2 bg-white hover:bg-yellow-300 rounded-lg transition border-3 border-black"
+                        className="tactile-button p-2 sm:p-2.5 md:p-3 bg-white hover:bg-yellow-300 rounded-lg transition border-2 sm:border-3 border-black min-h-[44px] min-w-[44px]"
                         title={isSidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
-                        style={{ boxShadow: '3px 3px 0px #000' }}
+                        style={{ boxShadow: '2px 2px 0px #000' }}
+                        aria-label="Toggle sidebar"
                     >
-                        <svg className="w-5 h-5 text-black stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 sm:w-6 sm:h-6 text-black stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                         </svg>
                     </button>
                     <div>
-                        <h1 className="text-2xl font-bold text-black flex items-center gap-2" style={{ fontFamily: "'Bangers', cursive", textShadow: '2px 2px 0px #fff, 3px 3px 0px #000', letterSpacing: '2px' }}>
-                            <span className="text-3xl">⚡</span>
-                            N8N WORKFLOW AUTOMATION!
+                        <h1 className="text-base sm:text-xl md:text-2xl lg:text-3xl font-bold text-black flex items-center gap-1 sm:gap-2" style={{ fontFamily: "'Bangers', cursive", textShadow: '2px 2px 0px #fff, 3px 3px 0px #000', letterSpacing: '1px' }}>
+                            <span className="text-lg sm:text-2xl md:text-3xl">⚡</span>
+                            <span className="hidden sm:inline">N8N WORKFLOW AUTOMATION!</span>
+                            <span className="sm:hidden">N8N</span>
                         </h1>
-                        <p className="text-sm text-black font-bold" style={{ fontFamily: "'Comic Neue', cursive" }}>
+                        <p className="hidden md:block text-xs md:text-sm text-black font-bold" style={{ fontFamily: "'Comic Neue', cursive" }}>
                             POW! Build workflows visually • BAM! 100+ integrations
                         </p>
                     </div>
                 </div>
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 sm:gap-2 md:gap-3 order-last lg:order-none w-full lg:w-auto justify-center lg:justify-start mt-2 lg:mt-0">
+                    <div className="flex items-center gap-1 sm:gap-2">
                         <button
                             type="button"
                             onClick={toggleSelectionMode}
-                            className={`tactile-button w-16 h-16 flex flex-col items-center justify-center gap-0.5 px-2 py-1 rounded-lg text-[11px] font-bold ${
+                            className={`hidden lg:flex tactile-button w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 flex-col items-center justify-center gap-0.5 px-1 sm:px-2 py-1 rounded-lg text-[10px] sm:text-[11px] font-bold ${
                                 selectionMode === 'select'
-                                    ? 'bg-cyan-400 text-black border-4 border-black'
-                                    : 'bg-white text-black border-4 border-black'
+                                    ? 'bg-cyan-400 text-black border-2 md:border-3 lg:border-4 border-black'
+                                    : 'bg-white text-black border-2 md:border-3 lg:border-4 border-black'
                             }`}
-                            style={{ boxShadow: '4px 4px 0px #000', fontFamily: "'Comic Neue', cursive" }}
+                            style={{ boxShadow: '2px 2px 0px #000', fontFamily: "'Comic Neue', cursive" }}
                             title={selectionMode === 'select' ? 'Box selection enabled' : 'Enable box selection'}
                             aria-pressed={selectionMode === 'select'}
                         >
@@ -625,13 +627,13 @@ export default function App() {
                             </svg>
                             <span className="text-[10px] uppercase tracking-wide leading-none">Select</span>
                         </button>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1 sm:gap-2">
                             <button
                                 type="button"
                                 onClick={handleUndo}
                                 disabled={!canUndo}
-                                className="tactile-button w-16 h-16 flex flex-col items-center justify-center gap-0.5 px-2 py-1 rounded-lg bg-white text-black border-4 border-black  disabled:opacity-30 disabled:hover:scale-100"
-                                style={{ boxShadow: '4px 4px 0px #000', fontFamily: "'Comic Neue', cursive" }}
+                                className="hidden md:flex tactile-button w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 flex-col items-center justify-center gap-0.5 px-1 sm:px-2 py-1 rounded-lg bg-white text-black border-2 md:border-3 lg:border-4 border-black disabled:opacity-30 disabled:hover:scale-100"
+                                style={{ boxShadow: '2px 2px 0px #000', fontFamily: "'Comic Neue', cursive" }}
                                 title="Undo"
                                 aria-label="Undo"
                             >
@@ -646,8 +648,8 @@ export default function App() {
                                 type="button"
                                 onClick={handleRedo}
                                 disabled={!canRedo}
-                                className="tactile-button w-16 h-16 flex flex-col items-center justify-center gap-0.5 px-2 py-1 rounded-lg bg-white text-black border-4 border-black  disabled:opacity-30 disabled:hover:scale-100"
-                                style={{ boxShadow: '4px 4px 0px #000', fontFamily: "'Comic Neue', cursive" }}
+                                className="hidden md:flex tactile-button w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 flex-col items-center justify-center gap-0.5 px-1 sm:px-2 py-1 rounded-lg bg-white text-black border-2 md:border-3 lg:border-4 border-black disabled:opacity-30 disabled:hover:scale-100"
+                                style={{ boxShadow: '2px 2px 0px #000', fontFamily: "'Comic Neue', cursive" }}
                                 title="Redo"
                                 aria-label="Redo"
                             >
@@ -661,15 +663,15 @@ export default function App() {
                             <button
                                 type="button"
                                 onClick={handleQuickSave}
-                                className="tactile-button w-16 h-16 flex flex-col items-center justify-center gap-0.5 px-2 py-1 rounded-lg bg-green-400 text-black border-4 border-black "
-                                style={{ boxShadow: '4px 4px 0px #000', fontFamily: "'Comic Neue', cursive" }}
+                                className="tactile-button w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 flex flex-col items-center justify-center gap-0.5 px-1 sm:px-2 py-1 rounded-lg bg-green-400 text-black border-2 sm:border-3 md:border-4 border-black min-h-[48px] min-w-[48px]"
+                                style={{ boxShadow: '2px 2px 0px #000', fontFamily: "'Comic Neue', cursive" }}
                                 title="Quick save"
                                 aria-label="Save"
                             >
-                                <span className="material-symbols-outlined text-[22px] leading-none">
+                                <span className="material-symbols-outlined text-lg sm:text-[20px] md:text-[22px] leading-none">
                                     save
                                 </span>
-                                <span className="text-[10px] uppercase tracking-wide leading-none text-black font-bold">
+                                <span className="hidden sm:block text-[9px] sm:text-[10px] uppercase tracking-wide leading-none text-black font-bold">
                                     SAVE
                                 </span>
                             </button>
@@ -677,8 +679,8 @@ export default function App() {
                                 type="button"
                                 onClick={handleDeleteSelection}
                                 disabled={!selectionCount}
-                                className="tactile-button w-16 h-16 flex flex-col items-center justify-center gap-0.5 px-2 py-1 rounded-lg bg-red-400 text-black border-4 border-black  disabled:opacity-30 disabled:hover:scale-100"
-                                style={{ boxShadow: '4px 4px 0px #000', fontFamily: "'Comic Neue', cursive" }}
+                                className="hidden sm:flex tactile-button w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 flex-col items-center justify-center gap-0.5 px-1 sm:px-2 py-1 rounded-lg bg-red-400 text-black border-2 sm:border-3 md:border-4 border-black disabled:opacity-30 disabled:hover:scale-100"
+                                style={{ boxShadow: '2px 2px 0px #000', fontFamily: "'Comic Neue', cursive" }}
                                 title="Delete selection"
                                 aria-label="Delete selection"
                             >
@@ -693,8 +695,8 @@ export default function App() {
                                 type="button"
                                 onClick={() => canvasRef.current?.groupNodes?.()}
                                 disabled={selectionCount < 2}
-                                className="tactile-button w-16 h-16 flex flex-col items-center justify-center gap-0.5 px-2 py-1 rounded-lg bg-orange-400 text-black border-4 border-black  disabled:opacity-30"
-                                style={{ boxShadow: '4px 4px 0px #000', fontFamily: "'Comic Neue', cursive" }}
+                                className="hidden xl:flex tactile-button w-14 h-14 lg:w-16 lg:h-16 flex-col items-center justify-center gap-0.5 px-1 sm:px-2 py-1 rounded-lg bg-orange-400 text-black border-2 md:border-3 lg:border-4 border-black disabled:opacity-30"
+                                style={{ boxShadow: '2px 2px 0px #000', fontFamily: "'Comic Neue', cursive" }}
                                 title="Group selected nodes into a bundle"
                                 aria-label="Bundle nodes"
                             >
@@ -722,14 +724,15 @@ export default function App() {
                     <div className="relative" ref={editMenuRef}>
                         <button
                             type="button"
-                            className="tactile-button flex items-center gap-1 text-sm font-bold text-black px-4 h-16 rounded-lg bg-purple-400 border-4 border-black "
+                            className="tactile-button flex items-center gap-1 text-xs sm:text-sm font-bold text-black px-2 sm:px-3 md:px-4 h-12 sm:h-14 md:h-16 rounded-lg bg-purple-400 border-2 sm:border-3 md:border-4 border-black min-h-[48px]"
                             onClick={() => setIsEditMenuOpen((prev) => !prev)}
-                            style={{ boxShadow: '4px 4px 0px #000', fontFamily: "'Bangers', cursive", letterSpacing: '1px' }}
+                            style={{ boxShadow: '2px 2px 0px #000', fontFamily: "'Bangers', cursive", letterSpacing: '0.5px' }}
                             aria-haspopup="true"
                             aria-expanded={isEditMenuOpen}
                         >
-                            Edit
-                            <svg className={`w-4 h-4 transition-transform ${isEditMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <span className="hidden sm:inline">Edit</span>
+                            <span className="sm:hidden text-base">⋮</span>
+                            <svg className={`hidden sm:block w-3 h-3 sm:w-4 sm:h-4 transition-transform ${isEditMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                             </svg>
                         </button>
@@ -804,24 +807,24 @@ export default function App() {
                     </div>
 
                     {/* User Info and Credits */}
-                    <div className="flex items-center gap-3 ml-auto">
+                    <div className="flex items-center gap-1 sm:gap-2 md:gap-3 ml-auto">
                         {user ? (
                             <>
                                 {/* Credit Balance */}
-                                <div className="flex items-center gap-2 bg-yellow-300 px-4 h-16 rounded-lg border-3 border-black"
-                                     style={{ boxShadow: '3px 3px 0px #000' }}>
-                                    <span className="text-2xl">💰</span>
-                                    <span className="font-bold text-lg">{user.credit_balance}</span>
-                                    <span className="text-xs text-gray-700">credits</span>
+                                <div className="flex items-center gap-1 sm:gap-2 bg-yellow-300 px-2 sm:px-3 md:px-4 h-12 sm:h-14 md:h-16 rounded-lg border-2 sm:border-3 border-black"
+                                     style={{ boxShadow: '2px 2px 0px #000' }}>
+                                    <span className="text-lg sm:text-xl md:text-2xl">💰</span>
+                                    <span className="font-bold text-sm sm:text-base md:text-lg">{user.credit_balance}</span>
+                                    <span className="hidden sm:inline text-xs text-gray-700">credits</span>
                                 </div>
 
                                 {/* User Avatar and Name */}
-                                <div className="flex items-center gap-2 bg-white px-3 h-16 rounded-lg border-3 border-black max-w-[150px] sm:max-w-[200px]"
-                                     style={{ boxShadow: '3px 3px 0px #000' }}>
+                                <div className="hidden sm:flex items-center gap-1 sm:gap-2 bg-white px-2 sm:px-3 h-12 sm:h-14 md:h-16 rounded-lg border-2 sm:border-3 border-black max-w-[100px] sm:max-w-[150px] md:max-w-[200px]"
+                                     style={{ boxShadow: '2px 2px 0px #000' }}>
                                     {user.avatar && (
-                                        <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full border-2 border-black flex-shrink-0" />
+                                        <img src={user.avatar} alt={user.name} className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 border-black flex-shrink-0" />
                                     )}
-                                    <span className="font-medium text-sm truncate">{user.name}</span>
+                                    <span className="font-medium text-xs sm:text-sm truncate">{user.name}</span>
                                 </div>
 
                                 {/* Logout Button */}
@@ -831,10 +834,11 @@ export default function App() {
                                         setUser(null);
                                         window.location.reload();
                                     }}
-                                    className="tactile-button bg-red-400 text-white px-4 h-16 rounded-lg font-bold border-3 border-black hover:bg-red-500"
-                                    style={{ boxShadow: '3px 3px 0px #000' }}
+                                    className="tactile-button bg-red-400 text-white px-2 sm:px-3 md:px-4 h-12 sm:h-14 md:h-16 rounded-lg text-xs sm:text-sm font-bold border-2 sm:border-3 border-black hover:bg-red-500 min-h-[48px]"
+                                    style={{ boxShadow: '2px 2px 0px #000' }}
                                 >
-                                    Logout
+                                    <span className="hidden sm:inline">Logout</span>
+                                    <span className="sm:hidden">🚪</span>
                                 </button>
                             </>
                         ) : (
@@ -843,11 +847,12 @@ export default function App() {
                                     setShowLoginModal(true);
                                     setLoginReason('general');
                                 }}
-                                className="tactile-button bg-blue-500 text-white px-6 h-16 rounded-lg font-bold border-3 border-black hover:bg-blue-600 flex items-center gap-2"
-                                style={{ boxShadow: '3px 3px 0px #000' }}
+                                className="tactile-button bg-blue-500 text-white px-3 sm:px-4 md:px-6 h-12 sm:h-14 md:h-16 rounded-lg text-xs sm:text-sm font-bold border-2 sm:border-3 border-black hover:bg-blue-600 flex items-center gap-1 sm:gap-2 min-h-[48px]"
+                                style={{ boxShadow: '2px 2px 0px #000' }}
                             >
-                                <span className="text-lg">🔐</span>
-                                <span>Sign In</span>
+                                <span className="text-base sm:text-lg">🔐</span>
+                                <span className="hidden sm:inline">Sign In</span>
+                                <span className="sm:hidden text-xs">In</span>
                             </button>
                         )}
                     </div>
@@ -861,11 +866,15 @@ export default function App() {
                             handleExecute();
                         }}
                         disabled={isExecuting || !selectedWorkflow}
-                        className="tactile-button text-base bg-lime-400 text-black px-6 h-16 rounded-lg font-bold border-4 border-black disabled:opacity-50 disabled:cursor-not-allowed hover:bg-lime-500 active:bg-lime-600 transition-colors"
-                        style={{ boxShadow: '5px 5px 0px #000', fontFamily: "'Bangers', cursive", letterSpacing: '2px', pointerEvents: (isExecuting || !selectedWorkflow) ? 'none' : 'auto' }}
+                        className="tactile-button text-xs sm:text-sm md:text-base bg-lime-400 text-black px-3 sm:px-4 md:px-6 h-12 sm:h-14 md:h-16 rounded-lg font-bold border-2 sm:border-3 md:border-4 border-black disabled:opacity-50 disabled:cursor-not-allowed hover:bg-lime-500 active:bg-lime-600 transition-colors min-h-[48px]"
+                        style={{ boxShadow: '2px 2px 0px #000', fontFamily: "'Bangers', cursive", letterSpacing: '1px', pointerEvents: (isExecuting || !selectedWorkflow) ? 'none' : 'auto' }}
                     >
-                        <span className="flex items-center gap-2">
-                            {isExecuting ? '⚡ RUNNING...' : '▶️ EXECUTE!'}
+                        <span className="flex items-center gap-1 sm:gap-2">
+                            {isExecuting ? (
+                                <><span className="hidden sm:inline">⚡ RUNNING...</span><span className="sm:hidden">⚡</span></>
+                            ) : (
+                                <><span className="hidden sm:inline">▶️ EXECUTE!</span><span className="sm:hidden">▶️</span></>
+                            )}
                         </span>
                     </button>
                 </div>
