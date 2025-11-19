@@ -35,20 +35,12 @@ export default function NodesCarousel({ onNodeDragStart }) {
   // Auto-scroll effect - smooth continuous upward scroll
   useEffect(() => {
     const container = nodesListRef.current;
-    if (!container) {
-      console.log('❌ No container ref');
+    if (!container || loopedNodes.length === 0) {
       return;
     }
 
-    console.log('✅ Auto-scroll effect started', { 
-      isActive: isAutoScrollActive, 
-      scrollHeight: container.scrollHeight,
-      clientHeight: container.clientHeight,
-      maxScroll: container.scrollHeight - container.clientHeight
-    });
-
     let lastTime = performance.now();
-    const scrollSpeed = 30; // pixels per second (slow and subtle)
+    const scrollSpeed = 20; // pixels per second (slow and subtle)
 
     const animate = (currentTime) => {
       if (!container) return;
@@ -56,16 +48,20 @@ export default function NodesCarousel({ onNodeDragStart }) {
       const deltaTime = (currentTime - lastTime) / 1000; // Convert to seconds
       lastTime = currentTime;
 
-      if (isAutoScrollActive) {
+      if (isAutoScrollActive && loopedNodes.length > 0) {
         const maxScroll = container.scrollHeight - container.clientHeight;
         
         if (maxScroll > 0) {
           let newScrollTop = container.scrollTop + (scrollSpeed * deltaTime);
           
           // Reset scroll to create infinite loop effect (using the tripled array)
-          const resetPoint = container.scrollHeight * 0.66; // Reset at 2/3 point
+          // Each segment is 1/3 of total height
+          const segmentHeight = container.scrollHeight / 3;
+          const resetPoint = segmentHeight * 2; // Reset at 2/3 point
+          
           if (newScrollTop >= resetPoint) {
-            newScrollTop = container.scrollHeight * 0.33; // Jump back to 1/3 point
+            // Jump back to start of second segment (1/3 point) for seamless loop
+            newScrollTop = segmentHeight;
           }
           
           container.scrollTop = newScrollTop;
@@ -75,6 +71,7 @@ export default function NodesCarousel({ onNodeDragStart }) {
       animationFrameRef.current = requestAnimationFrame(animate);
     };
 
+    // Start the animation
     animationFrameRef.current = requestAnimationFrame(animate);
 
     return () => {
@@ -232,7 +229,7 @@ export default function NodesCarousel({ onNodeDragStart }) {
         .scrollbar-hide {
           -ms-overflow-style: none;
           scrollbar-width: none;
-          scroll-behavior: auto;
+          scroll-behavior: auto !important;
         }
         .scrollbar-hide::-webkit-scrollbar {
           display: none;
@@ -249,6 +246,13 @@ export default function NodesCarousel({ onNodeDragStart }) {
         .tactile-button:active {
           transform: translate(2px, 2px);
           box-shadow: 0px 0px 0px #000 !important;
+        }
+        
+        /* Ensure smooth auto-scroll animation */
+        .auto-scroll-container {
+          overflow-y: scroll;
+          scroll-behavior: auto !important;
+          overscroll-behavior: contain;
         }
       `}</style>
     </div>
