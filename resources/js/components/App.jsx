@@ -6,6 +6,7 @@ import NodesCarousel from './NodesCarousel.jsx';
 import NodeSettingsPanel from './NodeSettingsPanel.jsx';
 import GoogleLoginModal from './GoogleLoginModal.jsx';
 import InsufficientCreditsModal from './InsufficientCreditsModal.jsx';
+import CredentialsModal from './CredentialsModal.jsx';
 import { n8nNodes } from '../data/n8nNodes.js';
 import { getNodeExecutionData } from '../data/nodeExecutionData.js';
 
@@ -68,6 +69,8 @@ export default function App() {
     const [loginReason, setLoginReason] = useState('');
     const [showCreditsModal, setShowCreditsModal] = useState(false);
     const [creditInfo, setCreditInfo] = useState({ required: 0, current: 0, action: '' });
+    const [credentials, setCredentials] = useState([]);
+    const [showCredentialsModal, setShowCredentialsModal] = useState(false);
     const canvasRef = useRef(null);
     const editMenuRef = useRef(null);
     const pollingIntervalRef = useRef(null);
@@ -84,6 +87,23 @@ export default function App() {
             }
         })();
     }, []);
+
+    // Fetch credentials when user is authenticated
+    useEffect(() => {
+        if (user) {
+            fetchCredentials();
+        }
+    }, [user]);
+
+    const fetchCredentials = async () => {
+        try {
+            const { data } = await axios.get('/app/credentials');
+            setCredentials(data.credentials || []);
+            console.log('📋 Loaded credentials:', data.credentials?.length || 0);
+        } catch (error) {
+            console.error('Failed to fetch credentials', error);
+        }
+    };
 
     useEffect(() => {
         (async () => {
@@ -804,6 +824,22 @@ export default function App() {
                                     DOWNLOAD
                                 </span>
                             </button>
+                            {/* Credentials Button */}
+                            {user && (
+                                <button
+                                    type="button"
+                                    onClick={() => setShowCredentialsModal(true)}
+                                    className="hidden lg:flex tactile-button w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 flex-col items-center justify-center gap-0.5 px-1 sm:px-2 py-1 rounded-lg bg-pink-400 text-black border-2 sm:border-3 md:border-4 border-black min-h-[48px] min-w-[48px]"
+                                    style={{ boxShadow: '2px 2px 0px #000', fontFamily: "'Comic Neue', cursive" }}
+                                    title="Manage API Keys & Credentials"
+                                    aria-label="Credentials"
+                                >
+                                    <span className="text-2xl leading-none">🔐</span>
+                                    <span className="hidden sm:block text-[9px] sm:text-[10px] uppercase tracking-wide leading-none text-black font-bold">
+                                        KEYS
+                                    </span>
+                                </button>
+                            )}
                             <button
                                 type="button"
                                 onClick={() => canvasRef.current?.groupNodes?.()}
@@ -1032,6 +1068,7 @@ export default function App() {
                         onUpdate={handleNodeSettingsUpdate}
                         executionData={activeNode?.data?.executionData || null}
                         graph={currentGraph}
+                        credentials={credentials}
                     />
                 )}
             </main>
@@ -1064,6 +1101,13 @@ export default function App() {
                 required={creditInfo.required}
                 current={creditInfo.current}
                 action={creditInfo.action}
+            />
+
+            {/* Credentials Manager Modal */}
+            <CredentialsModal
+                isOpen={showCredentialsModal}
+                onClose={() => setShowCredentialsModal(false)}
+                onCredentialAdded={fetchCredentials}
             />
         </div>
         <style>{`

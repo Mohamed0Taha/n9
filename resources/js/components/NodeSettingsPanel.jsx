@@ -1,9 +1,9 @@
-import { Fragment, useState } from 'react';
-import { getNodeConfiguration } from '../data/nodeConfigurations.js';
+import { Fragment, useState, useEffect } from 'react';
+import { getNodeSchema } from '../data/nodeSchemas.js';
 import NodeDataPanel from './NodeDataPanel_v2.jsx';
+import NodeConfigForm from './NodeConfigForm.jsx';
 
-export default function NodeSettingsPanel({ node, onClose, onUpdate, executionData, graph }) {
-    const [expandedSections, setExpandedSections] = useState({});
+export default function NodeSettingsPanel({ node, onClose, onUpdate, executionData, graph, credentials = [] }) {
     const [formData, setFormData] = useState({});
     const [activeTab, setActiveTab] = useState('settings'); // 'settings', 'input', 'output'
 
@@ -13,36 +13,30 @@ export default function NodeSettingsPanel({ node, onClose, onUpdate, executionDa
 
     const { data = {} } = node;
     const nodeName = data.label || data.name || 'Node';
-    const nodeType = data.type || nodeName;
+    const nodeType = node.type || nodeName;
     const nodeCategory = data.category || '';
-    const config = getNodeConfiguration(nodeName, nodeType, nodeCategory);
+    const schema = getNodeSchema(nodeType);
 
-    const toggleSection = (sectionTitle) => {
-        setExpandedSections(prev => ({
-            ...prev,
-            [sectionTitle]: !prev[sectionTitle]
-        }));
-    };
+    // Initialize form data from node parameters
+    useEffect(() => {
+        setFormData(data.parameters || {});
+    }, [node.id]);
 
-    const handleFieldChange = (fieldName, value) => {
-        setFormData(prev => ({
-            ...prev,
-            [fieldName]: value
-        }));
+    const handleFormChange = (newFormData) => {
+        setFormData(newFormData);
     };
 
     const handleSave = () => {
         if (onUpdate) {
-            onUpdate({
+            const updatedNode = {
                 ...node,
                 data: {
                     ...node.data,
-                    parameters: {
-                        ...node.data.parameters,
-                        ...formData
-                    }
+                    parameters: formData
                 }
-            });
+            };
+            console.log('💾 Saving node configuration:', updatedNode);
+            onUpdate(updatedNode);
         }
         onClose();
     };
@@ -117,9 +111,25 @@ export default function NodeSettingsPanel({ node, onClose, onUpdate, executionDa
                 </div>
 
                 {/* Scrollable Content */}
-                <div className="flex-1 overflow-y-auto px-5 py-4 space-y-1">
-                    {/* Render dynamic sections based on node type */}
-                    {config.sections.map((section, sectionIdx) => {
+                <div className="flex-1 overflow-y-auto px-5 py-4">
+                    {/* Render schema-based configuration form */}
+                    {activeTab === 'settings' && (
+                        <NodeConfigForm
+                            schema={schema}
+                            values={formData}
+                            onChange={handleFormChange}
+                            credentials={credentials}
+                        />
+                    )}
+
+                    {activeTab === 'conditions' && (
+                        <div className="p-4 border-3 border-black rounded-lg bg-yellow-50">
+                            <p className="text-sm text-gray-600">Advanced parameters and conditions will appear here.</p>
+                        </div>
+                    )}
+
+                    {/* Legacy config rendering (fallback) */}
+                    {false && config.sections?.map((section, sectionIdx) => {
                         const isExpanded = expandedSections[section.title] !== false;
                         
                         return (
@@ -296,76 +306,28 @@ export default function NodeSettingsPanel({ node, onClose, onUpdate, executionDa
                         </div>
                     );
                 })}
+                </div>
 
-                {/* Execution Settings */}
-                <div className="border border-slate-200 rounded-lg overflow-hidden mt-4">
+                {/* Footer Actions */}
+                <div className="flex-shrink-0 px-5 py-4 border-t-4 border-black bg-gradient-to-r from-yellow-400 to-orange-400 flex items-center justify-end gap-3" style={{ boxShadow: '0px -4px 0px #000' }}>
                     <button
                         type="button"
-                        onClick={() => toggleSection('Execution Settings')}
-                        className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 transition"
+                        className="px-4 py-2 text-sm font-bold text-black bg-white border-3 border-black rounded-lg hover:bg-gray-100 transition tactile-button"
+                        onClick={onClose}
+                        style={{ boxShadow: '2px 2px 0px #000' }}
                     >
-                        <span className="text-sm font-semibold text-slate-700">Execution Settings</span>
-                        <svg 
-                            className={`w-4 h-4 text-slate-500 transition-transform ${expandedSections['Execution Settings'] ? 'rotate-180' : ''}`} 
-                            fill="none" 
-                            stroke="currentColor" 
-                            viewBox="0 0 24 24"
-                        >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
+                        Cancel
                     </button>
-                    {expandedSections['Execution Settings'] && (
-                        <div className="px-4 py-4 space-y-3 bg-white">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    className="rounded border-slate-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
-                                    defaultChecked={data.parameters?.alwaysOutputData || false}
-                                    onChange={(e) => handleFieldChange('alwaysOutputData', e.target.checked)}
-                                />
-                                <span className="text-sm text-slate-700">Always Output Data</span>
-                            </label>
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    className="rounded border-slate-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
-                                    defaultChecked={data.parameters?.continueOnFail || false}
-                                    onChange={(e) => handleFieldChange('continueOnFail', e.target.checked)}
-                                />
-                                <span className="text-sm text-slate-700">Continue on Fail</span>
-                            </label>
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    className="rounded border-slate-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
-                                    defaultChecked={data.parameters?.retryOnFail || false}
-                                    onChange={(e) => handleFieldChange('retryOnFail', e.target.checked)}
-                                />
-                                <span className="text-sm text-slate-700">Retry on Fail</span>
-                            </label>
-                        </div>
-                    )}
+                    <button
+                        type="button"
+                        className="px-5 py-2 text-sm font-bold text-white bg-green-500 border-3 border-black rounded-lg hover:bg-green-600 transition tactile-button"
+                        onClick={handleSave}
+                        style={{ boxShadow: '3px 3px 0px #000' }}
+                    >
+                        💾 SAVE CHANGES
+                    </button>
                 </div>
             </div>
-
-            {/* Footer Actions */}
-            <div className="flex-shrink-0 px-5 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-end gap-3">
-                <button
-                    type="button"
-                    className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 transition"
-                    onClick={onClose}
-                >
-                    Cancel
-                </button>
-                <button
-                    type="button"
-                    className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition shadow-sm"
-                    onClick={handleSave}
-                >
-                    Save Changes
-                </button>
-            </div>
-        </div>
 
             {/* Right Panel - OUTPUT */}
             <div className="w-64 bg-white flex-shrink-0 overflow-hidden">

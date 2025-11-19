@@ -33,10 +33,19 @@ Route::prefix('app')->group(function () {
     Route::get('/workflows/{workflow}/execution', [WorkflowExecutionController::class, 'getLatestRun']);
     Route::get('/workflows/{workflow}/runs', [WorkflowRunController::class, 'index']);
     
-    // Import/Export
+    // Workflow import/export routes
     Route::post('/workflows/upload', [\App\Http\Controllers\WorkflowImportExportController::class, 'upload']);
     Route::get('/workflows/{workflow}/download', [\App\Http\Controllers\WorkflowImportExportController::class, 'download']);
     Route::get('/workflows/{workflow}/preview', [\App\Http\Controllers\WorkflowImportExportController::class, 'preview']);
+
+    // Credential management routes
+    Route::middleware('auth')->prefix('credentials')->group(function () {
+        Route::get('/', [\App\Http\Controllers\CredentialController::class, 'index']);
+        Route::post('/', [\App\Http\Controllers\CredentialController::class, 'store']);
+        Route::get('/{id}', [\App\Http\Controllers\CredentialController::class, 'show']);
+        Route::put('/{id}', [\App\Http\Controllers\CredentialController::class, 'update']);
+        Route::delete('/{id}', [\App\Http\Controllers\CredentialController::class, 'destroy']);
+    });
 });
 
 // Debug route (remove after testing)
