@@ -1,5 +1,5 @@
 import { Fragment, useState, useEffect } from 'react';
-import { getNodeSchema } from '../data/nodeSchemas.js';
+import { getNodeSchema } from '../data/allNodeSchemas.js';
 import NodeDataPanel from './NodeDataPanel_v2.jsx';
 import NodeConfigForm from './NodeConfigForm.jsx';
 
