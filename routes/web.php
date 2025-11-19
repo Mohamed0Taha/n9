@@ -32,6 +32,11 @@ Route::prefix('app')->group(function () {
     Route::post('/workflows/{workflow}/execute', [WorkflowController::class, 'execute']);
     Route::get('/workflows/{workflow}/execution', [WorkflowExecutionController::class, 'getLatestRun']);
     Route::get('/workflows/{workflow}/runs', [WorkflowRunController::class, 'index']);
+    
+    // Import/Export
+    Route::post('/workflows/upload', [\App\Http\Controllers\WorkflowImportExportController::class, 'upload']);
+    Route::get('/workflows/{workflow}/download', [\App\Http\Controllers\WorkflowImportExportController::class, 'download']);
+    Route::get('/workflows/{workflow}/preview', [\App\Http\Controllers\WorkflowImportExportController::class, 'preview']);
 });
 
 // Debug route (remove after testing)

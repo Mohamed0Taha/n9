@@ -567,6 +567,84 @@ export default function App() {
         };
     }, []);
 
+    // Handle workflow upload
+    const handleUpload = useCallback(async (event) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const { data } = await axios.post('/app/workflows/upload', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            // Set the imported workflow as draft
+            setDraft(data.workflow);
+            setGenerateStatus({ state: 'draft-ready', message: 'Workflow imported successfully!' });
+            setIsPromptOpen(true);
+        } catch (error) {
+            const message = error.response?.data?.message ?? 'Failed to import workflow';
+            alert('Import Error: ' + message);
+        }
+
+        // Reset file input
+        event.target.value = '';
+    }, []);
+
+    // Handle workflow download
+    const handleDownload = useCallback(async () => {
+        if (!user) {
+            setShowLoginModal(true);
+            setLoginReason('download_workflow');
+            return;
+        }
+
+        if (!selectedWorkflow) {
+            alert('No workflow selected');
+            return;
+        }
+
+        try {
+            const response = await axios.get(`/app/workflows/${selectedWorkflow.id}/download`, {
+                responseType: 'blob',
+            });
+
+            // Create blob link to download
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `${selectedWorkflow.name}.json`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+            window.URL.revokeObjectURL(url);
+
+            // Refresh user balance
+            const { data } = await axios.get('/auth/user');
+            setUser(data.user);
+        } catch (error) {
+            if (error.response?.status === 401) {
+                setShowLoginModal(true);
+                setLoginReason('download_workflow');
+            } else if (error.response?.status === 402) {
+                const { required_credits, current_balance } = error.response.data;
+                setCreditInfo({
+                    required: required_credits,
+                    current: current_balance,
+                    action: 'download_workflow'
+                });
+                setShowCreditsModal(true);
+            } else {
+                const message = error.response?.data?.message ?? 'Failed to download workflow';
+                alert('Download Error: ' + message);
+            }
+        }
+    }, [user, selectedWorkflow]);
+
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white">
@@ -689,6 +767,41 @@ export default function App() {
                                 </span>
                                 <span className="text-[10px] uppercase tracking-wide leading-none text-black font-bold">
                                     ZAP!
+                                </span>
+                            </button>
+                            {/* Upload Button */}
+                            <label className="hidden md:flex tactile-button w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 flex-col items-center justify-center gap-0.5 px-1 sm:px-2 py-1 rounded-lg bg-blue-400 text-black border-2 sm:border-3 md:border-4 border-black cursor-pointer hover:scale-105 transition-transform min-h-[48px] min-w-[48px]"
+                                style={{ boxShadow: '2px 2px 0px #000', fontFamily: "'Comic Neue', cursive" }}
+                                title="Upload n8n workflow (JSON)"
+                            >
+                                <input
+                                    type="file"
+                                    accept=".json,application/json"
+                                    onChange={handleUpload}
+                                    className="hidden"
+                                />
+                                <span className="material-symbols-outlined text-lg sm:text-[20px] md:text-[22px] leading-none">
+                                    upload
+                                </span>
+                                <span className="hidden sm:block text-[9px] sm:text-[10px] uppercase tracking-wide leading-none text-black font-bold">
+                                    UPLOAD
+                                </span>
+                            </label>
+                            {/* Download Button */}
+                            <button
+                                type="button"
+                                onClick={handleDownload}
+                                disabled={!selectedWorkflow}
+                                className="hidden md:flex tactile-button w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 flex-col items-center justify-center gap-0.5 px-1 sm:px-2 py-1 rounded-lg bg-purple-400 text-black border-2 sm:border-3 md:border-4 border-black disabled:opacity-30 disabled:hover:scale-100 min-h-[48px] min-w-[48px]"
+                                style={{ boxShadow: '2px 2px 0px #000', fontFamily: "'Comic Neue', cursive" }}
+                                title="Download workflow (10 credits)"
+                                aria-label="Download"
+                            >
+                                <span className="material-symbols-outlined text-lg sm:text-[20px] md:text-[22px] leading-none">
+                                    download
+                                </span>
+                                <span className="hidden sm:block text-[9px] sm:text-[10px] uppercase tracking-wide leading-none text-black font-bold">
+                                    DOWNLOAD
                                 </span>
                             </button>
                             <button
