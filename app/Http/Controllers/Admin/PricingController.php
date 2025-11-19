@@ -14,12 +14,12 @@ class PricingController extends Controller
     public function index()
     {
         if (!auth()->check() || !auth()->user()->is_admin) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+            return redirect('/');
         }
 
         $pricing = PricingConfig::orderBy('name')->get();
         
-        return response()->json(['pricing' => $pricing]);
+        return view('admin.pricing', ['pricing' => $pricing]);
     }
 
     /**

@@ -77,13 +77,13 @@ class CreditManagementController extends Controller
     public function listUsers(Request $request)
     {
         if (!auth()->check() || !auth()->user()->is_admin) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+            return redirect('/');
         }
 
         $users = User::select('id', 'name', 'email', 'credit_balance', 'created_at')
             ->orderByDesc('credit_balance')
             ->get();
 
-        return response()->json(['users' => $users]);
+        return view('admin.users', ['users' => $users]);
     }
 }

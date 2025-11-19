@@ -47,6 +47,7 @@ Route::get('/debug/google-config', function () {
 
 // Admin routes
 Route::prefix('admin')->middleware('auth')->group(function () {
+    Route::view('/', 'admin.dashboard');
     Route::get('/pricing', [PricingController::class, 'index']);
     Route::patch('/pricing/{pricing}', [PricingController::class, 'update']);
     Route::post('/pricing/{pricing}/toggle', [PricingController::class, 'toggleActive']);
