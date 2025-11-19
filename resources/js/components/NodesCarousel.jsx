@@ -8,6 +8,7 @@ export default function NodesCarousel({ onNodeDragStart }) {
   const scrollContainerRef = useRef(null);
   const nodesListRef = useRef(null);
   const animationFrameRef = useRef(null);
+  const lastScrollTop = useRef(0);
 
   const filteredNodes = useMemo(() => {
     if (searchQuery.trim()) {
@@ -35,20 +36,21 @@ export default function NodesCarousel({ onNodeDragStart }) {
   // Auto-scroll effect - smooth continuous upward scroll
   useEffect(() => {
     const container = nodesListRef.current;
-    if (!container || loopedNodes.length === 0) {
+    if (!container) {
       return;
     }
 
     let lastTime = performance.now();
     const scrollSpeed = 20; // pixels per second (slow and subtle)
+    let isRunning = true;
 
     const animate = (currentTime) => {
-      if (!container) return;
+      if (!container || !isRunning) return;
 
       const deltaTime = (currentTime - lastTime) / 1000; // Convert to seconds
       lastTime = currentTime;
 
-      if (isAutoScrollActive && loopedNodes.length > 0) {
+      if (isAutoScrollActive) {
         const maxScroll = container.scrollHeight - container.clientHeight;
         
         if (maxScroll > 0) {
@@ -59,12 +61,13 @@ export default function NodesCarousel({ onNodeDragStart }) {
           const segmentHeight = container.scrollHeight / 3;
           const resetPoint = segmentHeight * 2; // Reset at 2/3 point
           
-          if (newScrollTop >= resetPoint) {
+          if (newScrollTop >= resetPoint && segmentHeight > 0) {
             // Jump back to start of second segment (1/3 point) for seamless loop
             newScrollTop = segmentHeight;
           }
           
           container.scrollTop = newScrollTop;
+          lastScrollTop.current = newScrollTop;
         }
       }
 
@@ -75,11 +78,13 @@ export default function NodesCarousel({ onNodeDragStart }) {
     animationFrameRef.current = requestAnimationFrame(animate);
 
     return () => {
+      isRunning = false;
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
       }
     };
-  }, [isAutoScrollActive, loopedNodes.length]);
+  }, [isAutoScrollActive]); // Only depend on isAutoScrollActive, not on loopedNodes
 
   // Scroll category horizontally
   const scrollToCategory = (dir) => {
