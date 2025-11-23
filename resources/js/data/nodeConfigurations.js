@@ -491,7 +491,7 @@ export const nodeConfigurations = {
     },
 
     // ========== COMMUNICATION NODES ==========
-    '': {
+    'Slack': {
         inputs: [
             { type: 'main', required: false } // Most nodes can work with or without input
         ],
@@ -597,7 +597,7 @@ export const nodeConfigurations = {
         ]
     },
 
-    '': {
+    'Gmail': {
         inputs: [
             { type: 'main', required: false } // Most nodes can work with or without input
         ],
@@ -637,7 +637,7 @@ export const nodeConfigurations = {
         ]
     },
 
-    '': {
+    'Discord': {
         inputs: [
             { type: 'main', required: false } // Most nodes can work with or without input
         ],
@@ -669,7 +669,7 @@ export const nodeConfigurations = {
     },
 
     // ========== AI NODES ==========
-    '': {
+    'OpenAI': {
         inputs: [
             { type: 'main', required: false } // Most nodes can work with or without input
         ],
@@ -760,7 +760,7 @@ export const nodeConfigurations = {
         ]
     },
 
-    '': {
+    'Anthropic': {
         inputs: [
             { type: 'main', required: false } // Most nodes can work with or without input
         ],
@@ -793,7 +793,7 @@ export const nodeConfigurations = {
     },
 
     // ========== DATABASE NODES ==========
-    '': {
+    'MySQL': {
         inputs: [
             { type: 'main', required: false } // Most nodes can work with or without input
         ],
@@ -817,7 +817,7 @@ export const nodeConfigurations = {
         ]
     },
 
-    '': {
+    'PostgreSQL': {
         inputs: [
             { type: 'main', required: false } // Most nodes can work with or without input
         ],
@@ -841,7 +841,7 @@ export const nodeConfigurations = {
         ]
     },
 
-    '': {
+    'MongoDB': {
         inputs: [
             { type: 'main', required: false } // Most nodes can work with or without input
         ],
@@ -867,7 +867,7 @@ export const nodeConfigurations = {
     },
 
     // ========== PRODUCTIVITY NODES ==========
-    '': {
+    'Google Sheets': {
         inputs: [
             { type: 'main', required: false } // Most nodes can work with or without input
         ],
@@ -900,7 +900,7 @@ export const nodeConfigurations = {
         ]
     },
 
-    '': {
+    'Notion': {
         inputs: [
             { type: 'main', required: false } // Most nodes can work with or without input
         ],

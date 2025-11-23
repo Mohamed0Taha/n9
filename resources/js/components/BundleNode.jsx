@@ -1,6 +1,9 @@
+import { useMemo } from 'react';
 import { Handle, Position } from 'reactflow';
+import { useTheme, THEMES } from '../contexts/ThemeContext.jsx';
 
 function BundleNode({ data, selected, id, onOpenSettings }) {
+  const { theme, isComic } = useTheme();
   const nodeCount = data.bundledNodes?.length || 0;
   
   // Execution status from real-time data
@@ -8,248 +11,215 @@ function BundleNode({ data, selected, id, onOpenSettings }) {
   const isExecuting = executionStatus === 'running';
   const hasExecuted = executionStatus === 'success';
   const hasError = executionStatus === 'error' || executionStatus === 'failed';
-  
-  // DEBUG: Log execution status for this bundle
-  if (executionStatus) {
-    console.log(`🎨 BundleNode [${id}] rendering with status:`, executionStatus, {
-      isExecuting,
-      hasExecuted,
-      hasError,
-      nodeCount
-    });
-  }
 
+  const themeStyles = useMemo(() => {
+    const baseHandle = "w-3 h-3";
+    
+    if (isComic) {
+        return {
+            container: `border-4 ${selected ? 'border-lime-400' : 'border-black'} rounded-2xl`,
+            containerStyle: { 
+                boxShadow: '4px 4px 0px #000', 
+                fontFamily: "'Comic Neue', cursive",
+                background: 'linear-gradient(to bottom, #22c55e 0%, #22c55e 16%, #eab308 16%, #eab308 32%, #f97316 32%, #f97316 48%, #ef4444 48%, #ef4444 64%, #a855f7 64%, #a855f7 80%, #3b82f6 80%, #3b82f6 100%)'
+            },
+            header: "border-b-3 border-black bg-white/90 rounded-t-xl",
+            iconBox: "border-3 border-black bg-slate-800 text-black shadow-[2px_2px_0px_#000]",
+            title: "text-black font-bold",
+            font: "'Comic Neue', cursive",
+            body: "bg-white/90 rounded-b-xl",
+            nodeItem: "bg-white border-2 border-black shadow-[1px_1px_0px_#000]",
+            badge: "bg-lime-400 border-3 border-black shadow-[2px_2px_0px_#000]",
+            badgeText: "text-black font-bold font-bangers",
+            handleInput: "w-5 h-5 !bg-lime-400 !border-3 !border-black !rounded-full shadow-[2px_2px_0px_#000]",
+            handleOutput: "w-5 h-5 !bg-cyan-400 !border-3 !border-black !rounded-full shadow-[2px_2px_0px_#000]",
+            labelInput: "bg-lime-400 border-2 border-black text-black shadow-[1px_1px_0px_#000]",
+            labelOutput: "bg-cyan-400 border-2 border-black text-black shadow-[1px_1px_0px_#000]",
+            settingsBtn: "bg-yellow-300 border-2 border-black shadow-[2px_2px_0px_#000]"
+        };
+    }
+
+    switch(theme) {
+        case THEMES.HACKER: return {
+            container: `border ${selected ? 'border-green-400' : 'border-green-600'} bg-black rounded-lg`,
+            containerStyle: { boxShadow: '0 0 15px rgba(0, 255, 0, 0.1)', fontFamily: 'monospace' },
+            header: "border-b border-green-900 bg-black rounded-t-lg",
+            iconBox: "border border-green-500 bg-black text-green-500",
+            title: "text-green-500 font-bold font-mono",
+            font: "monospace",
+            body: "bg-black rounded-b-lg",
+            nodeItem: "bg-black border border-green-800 text-green-400",
+            badge: "bg-green-900/30 border border-green-500 text-green-400",
+            badgeText: "font-mono font-bold",
+            handleInput: "w-3 h-3 !bg-black !border !border-green-500 !rounded-none hover:!bg-green-500",
+            handleOutput: "w-3 h-3 !bg-black !border !border-green-500 !rounded-none hover:!bg-green-500",
+            labelInput: "bg-black border border-green-500 text-green-500",
+            labelOutput: "bg-black border border-green-500 text-green-500",
+            settingsBtn: "bg-black border border-green-700 text-green-500 hover:bg-green-900/30"
+        };
+        case THEMES.TERMINAL: return {
+            container: `border ${selected ? 'border-amber-400' : 'border-amber-600'} bg-slate-950 rounded-lg`,
+            containerStyle: { boxShadow: '0 0 10px rgba(245, 158, 11, 0.1)', fontFamily: 'monospace' },
+            header: "border-b border-amber-900 bg-slate-950 rounded-t-lg",
+            iconBox: "border border-amber-600 bg-slate-950 text-amber-500",
+            title: "text-amber-500 font-bold font-mono",
+            font: "monospace",
+            body: "bg-slate-950 rounded-b-lg",
+            nodeItem: "bg-slate-950 border border-amber-800 text-amber-400",
+            badge: "bg-amber-900/30 border border-amber-600 text-amber-400",
+            badgeText: "font-mono font-bold",
+            handleInput: "w-3 h-3 !bg-slate-950 !border !border-amber-600 !rounded-none hover:!bg-amber-600",
+            handleOutput: "w-3 h-3 !bg-slate-950 !border !border-amber-600 !rounded-none hover:!bg-amber-600",
+            labelInput: "bg-slate-950 border border-amber-600 text-amber-500",
+            labelOutput: "bg-slate-950 border border-amber-600 text-amber-500",
+            settingsBtn: "bg-slate-950 border border-amber-700 text-amber-500 hover:bg-amber-900/30"
+        };
+        case THEMES.DARK: return {
+            container: `border ${selected ? 'border-blue-400' : 'border-gray-600'} bg-gray-800 rounded-xl`,
+            containerStyle: { boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.5)' },
+            header: "border-b border-gray-700 bg-gray-900 rounded-t-xl",
+            iconBox: "border border-gray-600 bg-gray-800 text-gray-200",
+            title: "text-gray-100 font-semibold",
+            font: "inherit",
+            body: "bg-gray-800 rounded-b-xl",
+            nodeItem: "bg-gray-700 border border-gray-600 text-gray-200",
+            badge: "bg-blue-900/50 border border-blue-700 text-blue-200",
+            badgeText: "font-medium",
+            handleInput: "w-4 h-4 !bg-gray-700 !border-2 !border-gray-500 !rounded-full hover:!bg-blue-500",
+            handleOutput: "w-4 h-4 !bg-gray-700 !border-2 !border-gray-500 !rounded-full hover:!bg-blue-500",
+            labelInput: "bg-gray-800 border border-gray-600 text-gray-300",
+            labelOutput: "bg-gray-800 border border-gray-600 text-gray-300",
+            settingsBtn: "bg-gray-800 border border-gray-600 text-gray-400 hover:bg-gray-700"
+        };
+        default: // PROFESSIONAL
+            return {
+                container: `border ${selected ? 'border-blue-400' : 'border-slate-200'} bg-white rounded-xl shadow-sm`,
+                containerStyle: { boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)' },
+                header: "border-b border-slate-100 bg-white rounded-t-xl",
+                iconBox: "border border-slate-200 bg-slate-50 text-slate-600",
+                title: "text-slate-700 font-semibold",
+                font: "inherit",
+                body: "bg-white rounded-b-xl",
+                nodeItem: "bg-slate-50 border border-slate-200 text-slate-600",
+                badge: "bg-blue-50 border border-blue-200 text-blue-600",
+                badgeText: "font-medium",
+                handleInput: "w-3 h-3 !bg-white !border-2 !border-slate-400 !rounded-full hover:!bg-blue-500",
+                handleOutput: "w-3 h-3 !bg-white !border-2 !border-slate-400 !rounded-full hover:!bg-blue-500",
+                labelInput: "bg-white border border-slate-200 text-slate-600 shadow-sm",
+                labelOutput: "bg-white border border-slate-200 text-slate-600 shadow-sm",
+                settingsBtn: "bg-white border border-slate-200 text-slate-400 hover:bg-slate-50"
+            };
+    }
+  }, [theme, isComic, selected]);
+  
   return (
     <>
       {/* Input Handle */}
       <div style={{ position: 'absolute', top: -28, left: '50%', transform: 'translateX(-50%)' }}>
         <div className="flex flex-col items-center gap-1">
-          <span className="text-[9px] font-bold bg-lime-400 px-2 py-0.5 rounded border-2 border-black text-black whitespace-nowrap" style={{ boxShadow: '1px 1px 0px #000' }}>
+          <span className={`text-[9px] font-bold px-2 py-0.5 rounded whitespace-nowrap ${themeStyles.labelInput}`}>
             INPUT
           </span>
           <Handle
             type="target"
             position={Position.Top}
             id="input-0"
-            className="w-5 h-5 !bg-lime-400 !border-3 !border-black !rounded-full"
-            style={{ position: 'relative', top: 0, left: 0, transform: 'none', boxShadow: '2px 2px 0px #000' }}
+            className={themeStyles.handleInput}
+            style={{ position: 'relative', top: 0, left: 0, transform: 'none' }}
           />
         </div>
       </div>
 
-      {/* Bundle Node - Comic Book Style (matching regular nodes) */}
+      {/* Bundle Node Container */}
       <div
-        className={`relative cursor-pointer border-4 ${
-          selected ? 'border-lime-400' : 'border-black'
-        }`}
+        className={`relative cursor-pointer ${themeStyles.container}`}
         style={{
           minWidth: '240px',
           maxWidth: '280px',
-          boxShadow: '4px 4px 0px #000',
-          fontFamily: "'Comic Neue', cursive",
-          borderRadius: '16px',
-          // WinRAR-style multi‑color stack background for the whole bundle
-          background:
-            'linear-gradient(to bottom, ' +
-            '#22c55e 0%, #22c55e 16%, ' + // green
-            '#eab308 16%, #eab308 32%, ' + // yellow
-            '#f97316 32%, #f97316 48%, ' + // orange
-            '#ef4444 48%, #ef4444 64%, ' + // red
-            '#a855f7 64%, #a855f7 80%, ' + // purple
-            '#3b82f6 80%, #3b82f6 100%)' // blue
+          ...themeStyles.containerStyle
         }}
       >
-        {/* Header with icon and name sitting on top of the stacked bundle */}
-        <div 
-          className="flex items-center gap-3 px-4 py-3 border-b-3 border-black"
-          style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.92)',
-            borderTopLeftRadius: '12px',
-            borderTopRightRadius: '12px',
-          }}
-        >
-          <div
-            className="flex items-center justify-center w-14 h-14 rounded-lg border-3 border-black relative"
-            style={{
-              backgroundColor: '#1e293b',
-              color: '#000',
-              boxShadow: '2px 2px 0px #000'
-            }}
-          >
-            {/* WinRAR-style archive icon - Stacked books with belt */}
-            <svg className="w-12 h-12" viewBox="0 0 64 64" fill="none">
-              {/* Stacked colored layers */}
-              <g>
-                {/* Green layer */}
-                <rect x="8" y="10" width="48" height="7" rx="1" fill="#22c55e"/>
-                <rect x="8" y="10" width="48" height="7" rx="1" fill="url(#greenGrad)"/>
-                <line x1="10" y1="11" x2="10" y2="16" stroke="#4ade80" strokeWidth="1" opacity="0.5"/>
-                
-                {/* Yellow layer */}
-                <rect x="8" y="18" width="48" height="7" rx="1" fill="#eab308"/>
-                <rect x="8" y="18" width="48" height="7" rx="1" fill="url(#yellowGrad)"/>
-                <line x1="10" y1="19" x2="10" y2="24" stroke="#fde047" strokeWidth="1" opacity="0.5"/>
-                
-                {/* Orange layer */}
-                <rect x="8" y="26" width="48" height="7" rx="1" fill="#f97316"/>
-                <rect x="8" y="26" width="48" height="7" rx="1" fill="url(#orangeGrad)"/>
-                <line x1="10" y1="27" x2="10" y2="32" stroke="#fb923c" strokeWidth="1" opacity="0.5"/>
-                
-                {/* Red layer */}
-                <rect x="8" y="34" width="48" height="7" rx="1" fill="#ef4444"/>
-                <rect x="8" y="34" width="48" height="7" rx="1" fill="url(#redGrad)"/>
-                <line x1="10" y1="35" x2="10" y2="40" stroke="#f87171" strokeWidth="1" opacity="0.5"/>
-                
-                {/* Purple layer */}
-                <rect x="8" y="42" width="48" height="7" rx="1" fill="#a855f7"/>
-                <rect x="8" y="42" width="48" height="7" rx="1" fill="url(#purpleGrad)"/>
-                <line x1="10" y1="43" x2="10" y2="48" stroke="#c084fc" strokeWidth="1" opacity="0.5"/>
-                
-                {/* Blue layer */}
-                <rect x="8" y="50" width="48" height="7" rx="1" fill="#3b82f6"/>
-                <rect x="8" y="50" width="48" height="7" rx="1" fill="url(#blueGrad)"/>
-                <line x1="10" y1="51" x2="10" y2="56" stroke="#60a5fa" strokeWidth="1" opacity="0.5"/>
-              </g>
-              
-              {/* Belt strap */}
-              <g>
-                {/* Main belt */}
-                <rect x="6" y="26" width="52" height="12" rx="2" fill="#d97706"/>
-                <rect x="6" y="26" width="52" height="12" rx="2" fill="url(#beltGrad)"/>
-                
-                {/* Stitching */}
-                <path d="M 8 28 L 10 28 M 12 28 L 14 28 M 16 28 L 18 28" stroke="#92400e" strokeWidth="0.5" strokeDasharray="1,1"/>
-                <path d="M 8 36 L 10 36 M 12 36 L 14 36 M 16 36 L 18 36" stroke="#92400e" strokeWidth="0.5" strokeDasharray="1,1"/>
-                
-                {/* Belt buckle */}
-                <rect x="26" y="28" width="12" height="8" rx="1" fill="#d4d4d4" stroke="#737373" strokeWidth="1"/>
-                <rect x="28" y="29.5" width="8" height="5" rx="0.5" fill="none" stroke="#525252" strokeWidth="1"/>
-                <circle cx="32" cy="32" r="1" fill="#404040"/>
-                
-                {/* Buckle pin */}
-                <rect x="30" y="31.5" width="4" height="1" rx="0.5" fill="#525252"/>
-              </g>
-              
-              {/* Gradients */}
-              <defs>
-                <linearGradient id="greenGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#4ade80" stopOpacity="0.6"/>
-                  <stop offset="100%" stopColor="#15803d" stopOpacity="0.3"/>
-                </linearGradient>
-                <linearGradient id="yellowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#fde047" stopOpacity="0.6"/>
-                  <stop offset="100%" stopColor="#a16207" stopOpacity="0.3"/>
-                </linearGradient>
-                <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#fb923c" stopOpacity="0.6"/>
-                  <stop offset="100%" stopColor="#c2410c" stopOpacity="0.3"/>
-                </linearGradient>
-                <linearGradient id="redGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#f87171" stopOpacity="0.6"/>
-                  <stop offset="100%" stopColor="#b91c1c" stopOpacity="0.3"/>
-                </linearGradient>
-                <linearGradient id="purpleGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#c084fc" stopOpacity="0.6"/>
-                  <stop offset="100%" stopColor="#7c3aed" stopOpacity="0.3"/>
-                </linearGradient>
-                <linearGradient id="blueGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#60a5fa" stopOpacity="0.6"/>
-                  <stop offset="100%" stopColor="#1d4ed8" stopOpacity="0.3"/>
-                </linearGradient>
-                <linearGradient id="beltGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#fbbf24" stopOpacity="0.4"/>
-                  <stop offset="50%" stopColor="#d97706" stopOpacity="0.2"/>
-                  <stop offset="100%" stopColor="#78350f" stopOpacity="0.4"/>
-                </linearGradient>
-              </defs>
+        {/* Header */}
+        <div className={`flex items-center gap-3 px-4 py-3 ${themeStyles.header}`}>
+          <div className={`flex items-center justify-center w-14 h-14 rounded-lg relative ${themeStyles.iconBox}`}>
+            {/* Icon SVG */}
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
             
-            {/* Spinner overlay when executing - STRONG BLUE OVERLAY */}
+            {/* Spinner overlay when executing */}
             {isExecuting && (
-              <div className="absolute inset-0 flex items-center justify-center bg-blue-500/95 rounded-lg border-2 border-blue-700">
-                <svg className="animate-spin h-10 w-10 text-white drop-shadow-lg" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <div className="absolute inset-0 flex items-center justify-center bg-blue-500/90 rounded-lg">
+                <svg className="animate-spin h-8 w-8 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
               </div>
             )}
             
-            {/* Success checkmark when completed */}
+            {/* Status Indicators */}
             {hasExecuted && !isExecuting && (
-              <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-1 border-2 border-black" style={{ boxShadow: '2px 2px 0px #000' }}>
-                <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-0.5 border border-black">
+                <svg className="h-3 w-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
             )}
-            
-            {/* Error indicator when failed */}
             {hasError && !isExecuting && (
-              <div className="absolute -top-1 -right-1 bg-red-500 rounded-full p-1 border-2 border-black" style={{ boxShadow: '2px 2px 0px #000' }}>
-                <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="absolute -top-1 -right-1 bg-red-500 rounded-full p-0.5 border border-black">
+                <svg className="h-3 w-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </div>
             )}
           </div>
+          
           <div className="flex-1 min-w-0">
-            <div className="font-bold text-base text-black truncate" style={{ fontFamily: "'Comic Neue', cursive" }}>
+            <div className={`text-base truncate ${themeStyles.title}`} style={{ fontFamily: themeStyles.font }}>
               {(data.label || 'UNNAMED BUNDLE').toUpperCase()}
             </div>
-            <div className="text-xs text-black font-bold truncate">
+            <div className={`text-xs truncate opacity-75 ${themeStyles.title}`}>
               Bundle • {nodeCount} nodes
             </div>
           </div>
           
-          {/* Settings button - Same position as regular nodes */}
+          {/* Settings button */}
           <button
             onClick={(e) => {
               e.stopPropagation();
-              if (onOpenSettings) {
-                onOpenSettings({ id, data });
-              }
+              onOpenSettings?.({ id, data });
             }}
-            className="p-1 bg-yellow-300 border-2 border-black rounded-lg"
-            style={{ boxShadow: '2px 2px 0px #000' }}
+            className={`p-1 rounded-lg transition-colors ${themeStyles.settingsBtn}`}
             title="Configure bundle"
           >
-            <svg className="w-4 h-4 text-black stroke-[2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           </button>
         </div>
 
-        {/* Body - Bundle Info */}
-        <div
-          className="px-4 py-3"
-          style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-            borderBottomLeftRadius: '12px',
-            borderBottomRightRadius: '12px',
-          }}
-        >
-          {/* Bundle nodes list preview */}
+        {/* Body */}
+        <div className={`px-4 py-3 ${themeStyles.body}`}>
           <div className="space-y-2">
-            <div className="text-xs font-bold text-black mb-2">BUNDLED NODES:</div>
+            <div className={`text-xs font-bold mb-2 opacity-70 ${themeStyles.title}`}>BUNDLED NODES:</div>
             {data.bundledNodes?.slice(0, 3).map((node, idx) => (
-              <div key={idx} className="flex items-center gap-2 text-xs bg-white p-2 rounded border-2 border-black" style={{ boxShadow: '1px 1px 0px #000' }}>
+              <div key={idx} className={`flex items-center gap-2 text-xs p-2 rounded ${themeStyles.nodeItem}`}>
                 <span className="text-sm">{node.data?.icon || '⚙️'}</span>
-                <span className="font-bold text-black truncate flex-1">{node.data?.label || node.data?.name || 'Node'}</span>
+                <span className="font-bold truncate flex-1">{node.data?.label || node.data?.name || 'Node'}</span>
               </div>
             ))}
             {nodeCount > 3 && (
-              <div className="text-xs font-bold text-black text-center py-1">
+              <div className={`text-xs font-bold text-center py-1 opacity-60 ${themeStyles.title}`}>
                 +{nodeCount - 3} more...
               </div>
             )}
           </div>
 
-          {/* Bundle status badge */}
           <div className="mt-3 flex items-center justify-center">
-            <div className="bg-lime-400 px-4 py-2 rounded-lg border-3 border-black inline-flex items-center gap-2" style={{ boxShadow: '2px 2px 0px #000' }}>
+            <div className={`px-4 py-2 rounded-lg inline-flex items-center gap-2 ${themeStyles.badge}`}>
               <span className="text-xl">💼</span>
-              <span className="font-bold text-black text-sm" style={{ fontFamily: "'Bangers', cursive" }}>
+              <span className={`text-sm ${themeStyles.badgeText}`}>
                 {nodeCount} NODES BUNDLED!
               </span>
             </div>
@@ -264,10 +234,10 @@ function BundleNode({ data, selected, id, onOpenSettings }) {
             type="source"
             position={Position.Bottom}
             id="output-0"
-            className="w-5 h-5 !bg-cyan-400 !border-3 !border-black !rounded-full"
-            style={{ position: 'relative', bottom: 0, left: 0, transform: 'none', boxShadow: '2px 2px 0px #000' }}
+            className={themeStyles.handleOutput}
+            style={{ position: 'relative', bottom: 0, left: 0, transform: 'none' }}
           />
-          <span className="text-[9px] font-bold bg-cyan-400 px-2 py-0.5 rounded border-2 border-black text-black whitespace-nowrap" style={{ boxShadow: '1px 1px 0px #000' }}>
+          <span className={`text-[9px] font-bold px-2 py-0.5 rounded whitespace-nowrap ${themeStyles.labelOutput}`}>
             OUTPUT
           </span>
         </div>

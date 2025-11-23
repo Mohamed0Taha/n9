@@ -47,7 +47,40 @@ class NodeConfigurationSchema
      */
     private static function getSchemas(): array
     {
+        // Generic schema for integration nodes that follow the standard pattern
+        $genericIntegrationSchema = [
+            'required' => ['operation'],
+            'defaults' => [
+                'operation' => 'execute',
+                'resource' => '',
+                'data' => '{}',
+            ],
+        ];
+
         return [
+            // --- Core Nodes ---
+            'Manual Trigger' => [
+                'required' => [],
+                'defaults' => [
+                    'description' => 'Trigger workflow manually',
+                ],
+            ],
+            'Start' => [
+                'required' => [],
+                'defaults' => [
+                    'description' => 'Manual workflow trigger',
+                ],
+            ],
+            'Schedule' => [
+                'required' => ['rule'],
+                'defaults' => [
+                    'rule' => [
+                        'interval' => [
+                            ['field' => 'hours'],
+                        ],
+                    ],
+                ],
+            ],
             'HTTP Request' => [
                 'required' => ['method', 'url'],
                 'defaults' => [
@@ -59,7 +92,6 @@ class NodeConfigurationSchema
                     'timeout' => 30000,
                 ],
             ],
-
             'Webhook' => [
                 'required' => ['httpMethod', 'path'],
                 'defaults' => [
@@ -69,7 +101,6 @@ class NodeConfigurationSchema
                     'responseCode' => 200,
                 ],
             ],
-
             'Code' => [
                 'required' => ['code', 'language'],
                 'defaults' => [
@@ -78,14 +109,8 @@ class NodeConfigurationSchema
                     'mode' => 'Run Once for All Items',
                 ],
             ],
-
-            'Function' => [
-                'required' => ['functionCode'],
-                'defaults' => [
-                    'functionCode' => 'return items;',
-                ],
-            ],
-
+            
+            // --- Flow Nodes ---
             'IF' => [
                 'required' => ['conditions'],
                 'defaults' => [
@@ -99,7 +124,6 @@ class NodeConfigurationSchema
                     'combineOperation' => 'all',
                 ],
             ],
-
             'Switch' => [
                 'required' => ['mode', 'rules'],
                 'defaults' => [
@@ -118,14 +142,12 @@ class NodeConfigurationSchema
                     ],
                 ],
             ],
-
             'Merge' => [
                 'required' => ['mode'],
                 'defaults' => [
                     'mode' => 'append',
                 ],
             ],
-
             'Split In Batches' => [
                 'required' => ['batchSize'],
                 'defaults' => [
@@ -134,6 +156,7 @@ class NodeConfigurationSchema
                 ],
             ],
 
+            // --- Communication ---
             'Slack' => [
                 'required' => ['resource', 'operation', 'channel', 'text'],
                 'defaults' => [
@@ -145,7 +168,6 @@ class NodeConfigurationSchema
                     'icon_emoji' => ':robot_face:',
                 ],
             ],
-
             'Discord' => [
                 'required' => ['webhookUrl', 'content'],
                 'defaults' => [
@@ -154,7 +176,6 @@ class NodeConfigurationSchema
                     'username' => 'n8n Bot',
                 ],
             ],
-
             'Telegram' => [
                 'required' => ['resource', 'operation', 'chatId', 'text'],
                 'defaults' => [
@@ -164,7 +185,6 @@ class NodeConfigurationSchema
                     'text' => 'Notification from n8n',
                 ],
             ],
-
             'Gmail' => [
                 'required' => ['resource', 'operation', 'to', 'subject', 'message'],
                 'defaults' => [
@@ -175,7 +195,6 @@ class NodeConfigurationSchema
                     'message' => 'This is an automated email from n8n workflow',
                 ],
             ],
-
             'Microsoft Teams' => [
                 'required' => ['resource', 'operation', 'channelId', 'message'],
                 'defaults' => [
@@ -185,7 +204,6 @@ class NodeConfigurationSchema
                     'message' => 'Message from n8n',
                 ],
             ],
-
             'Twilio' => [
                 'required' => ['operation', 'from', 'to', 'message'],
                 'defaults' => [
@@ -195,7 +213,6 @@ class NodeConfigurationSchema
                     'message' => 'SMS from n8n workflow',
                 ],
             ],
-
             'WhatsApp' => [
                 'required' => ['operation', 'to', 'message'],
                 'defaults' => [
@@ -205,6 +222,7 @@ class NodeConfigurationSchema
                 ],
             ],
 
+            // --- Productivity & CRM ---
             'Google Sheets' => [
                 'required' => ['resource', 'operation', 'spreadsheetId', 'range'],
                 'defaults' => [
@@ -215,7 +233,6 @@ class NodeConfigurationSchema
                     'dataMode' => 'Auto-Map',
                 ],
             ],
-
             'Notion' => [
                 'required' => ['resource', 'operation', 'databaseId'],
                 'defaults' => [
@@ -225,7 +242,6 @@ class NodeConfigurationSchema
                     'properties' => [],
                 ],
             ],
-
             'Airtable' => [
                 'required' => ['operation', 'baseId', 'table'],
                 'defaults' => [
@@ -235,7 +251,70 @@ class NodeConfigurationSchema
                     'fields' => [],
                 ],
             ],
+            'HubSpot' => [
+                'required' => ['resource', 'operation'],
+                'defaults' => [
+                    'resource' => 'Contact',
+                    'operation' => 'Create',
+                    'email' => 'contact@example.com',
+                    'properties' => [],
+                ],
+            ],
+            'Salesforce' => [
+                'required' => ['resource', 'operation'],
+                'defaults' => [
+                    'resource' => 'Contact',
+                    'operation' => 'Create',
+                    'fields' => [],
+                ],
+            ],
+            // Generic Productivity/CRM fallbacks
+            'Google Drive' => $genericIntegrationSchema,
+            'Asana' => $genericIntegrationSchema,
+            'Trello' => $genericIntegrationSchema,
+            'Monday' => $genericIntegrationSchema,
+            'Jira' => $genericIntegrationSchema,
+            'ClickUp' => $genericIntegrationSchema,
+            'Todoist' => $genericIntegrationSchema,
+            'Pipedrive' => $genericIntegrationSchema,
+            'Zoho CRM' => $genericIntegrationSchema,
+            'Close' => $genericIntegrationSchema,
+            'Copper' => $genericIntegrationSchema,
 
+            // --- E-commerce ---
+            'Stripe' => [
+                'required' => ['resource', 'operation'],
+                'defaults' => [
+                    'resource' => 'Charge',
+                    'operation' => 'Create',
+                    'amount' => 1000,
+                    'currency' => 'usd',
+                ],
+            ],
+            'Shopify' => $genericIntegrationSchema,
+            'WooCommerce' => $genericIntegrationSchema,
+            'PayPal' => $genericIntegrationSchema,
+            'Square' => $genericIntegrationSchema,
+
+            // --- Development ---
+            'GitHub' => [
+                'required' => ['resource', 'operation', 'owner', 'repository'],
+                'defaults' => [
+                    'resource' => 'Issue',
+                    'operation' => 'Create',
+                    'owner' => 'username',
+                    'repository' => 'repo-name',
+                    'title' => 'New Issue',
+                ],
+            ],
+            'GitLab' => $genericIntegrationSchema,
+            'Bitbucket' => $genericIntegrationSchema,
+            'Jenkins' => $genericIntegrationSchema,
+            'CircleCI' => $genericIntegrationSchema,
+            'Docker' => $genericIntegrationSchema,
+            'Kubernetes' => $genericIntegrationSchema,
+
+            // --- Database ---
             'MySQL' => [
                 'required' => ['operation', 'query'],
                 'defaults' => [
@@ -243,7 +322,6 @@ class NodeConfigurationSchema
                     'query' => 'SELECT * FROM table_name WHERE id = ?',
                 ],
             ],
-
             'PostgreSQL' => [
                 'required' => ['operation', 'query'],
                 'defaults' => [
@@ -251,7 +329,6 @@ class NodeConfigurationSchema
                     'query' => 'SELECT * FROM table_name WHERE id = $1',
                 ],
             ],
-
             'MongoDB' => [
                 'required' => ['operation', 'collection'],
                 'defaults' => [
@@ -260,7 +337,6 @@ class NodeConfigurationSchema
                     'query' => '{}',
                 ],
             ],
-
             'Redis' => [
                 'required' => ['operation', 'key'],
                 'defaults' => [
@@ -268,7 +344,10 @@ class NodeConfigurationSchema
                     'key' => 'cache_key',
                 ],
             ],
+            'Supabase' => $genericIntegrationSchema,
+            'Firebase' => $genericIntegrationSchema,
 
+            // --- AI ---
             'OpenAI' => [
                 'required' => ['resource', 'model', 'prompt'],
                 'defaults' => [
@@ -280,7 +359,6 @@ class NodeConfigurationSchema
                     'prompt' => 'Analyze this data: {{ $json }}',
                 ],
             ],
-
             'Anthropic' => [
                 'required' => ['model', 'prompt'],
                 'defaults' => [
@@ -291,47 +369,17 @@ class NodeConfigurationSchema
                     'prompt' => 'Analyze: {{ $json }}',
                 ],
             ],
-
-            'HubSpot' => [
-                'required' => ['resource', 'operation'],
+            'Google PaLM' => [
+                'required' => ['model', 'prompt'],
                 'defaults' => [
-                    'resource' => 'Contact',
-                    'operation' => 'Create',
-                    'email' => 'contact@example.com',
-                    'properties' => [],
+                    'model' => 'text-bison-001',
+                    'prompt' => '{{ $json.text }}',
                 ],
             ],
+            'Hugging Face' => $genericIntegrationSchema,
+            'AI Transform' => $genericIntegrationSchema,
 
-            'Salesforce' => [
-                'required' => ['resource', 'operation'],
-                'defaults' => [
-                    'resource' => 'Contact',
-                    'operation' => 'Create',
-                    'fields' => [],
-                ],
-            ],
-
-            'Stripe' => [
-                'required' => ['resource', 'operation'],
-                'defaults' => [
-                    'resource' => 'Charge',
-                    'operation' => 'Create',
-                    'amount' => 1000,
-                    'currency' => 'usd',
-                ],
-            ],
-
-            'GitHub' => [
-                'required' => ['resource', 'operation', 'owner', 'repository'],
-                'defaults' => [
-                    'resource' => 'Issue',
-                    'operation' => 'Create',
-                    'owner' => 'username',
-                    'repository' => 'repo-name',
-                    'title' => 'New Issue',
-                ],
-            ],
-
+            // --- Cloud ---
             'AWS S3' => [
                 'required' => ['operation', 'bucketName'],
                 'defaults' => [
@@ -340,31 +388,63 @@ class NodeConfigurationSchema
                     'fileName' => 'file.txt',
                 ],
             ],
+            'AWS Lambda' => $genericIntegrationSchema,
+            'Dropbox' => $genericIntegrationSchema,
+            'Box' => $genericIntegrationSchema,
+            'OneDrive' => $genericIntegrationSchema,
 
-            'Start' => [
-                'required' => [],
+            // --- Utilities ---
+            'Date & Time' => [
+                'required' => ['operation', 'value'],
                 'defaults' => [
-                    'description' => 'Manual workflow trigger',
+                    'operation' => 'format',
+                    'value' => '{{ $now }}',
+                    'format' => 'YYYY-MM-DD',
                 ],
             ],
-
-            'Schedule' => [
-                'required' => ['rule'],
+            'Set' => [
+                'required' => ['values'],
                 'defaults' => [
-                    'rule' => [
-                        'interval' => [
-                            ['field' => 'hours'],
-                        ],
-                    ],
+                    'values' => [],
+                    'keepOnlySet' => false,
                 ],
             ],
+            'Function' => [
+                'required' => ['functionCode'],
+                'defaults' => [
+                    'functionCode' => 'return items;',
+                ],
+            ],
+            'Crypto' => $genericIntegrationSchema,
+            'XML' => $genericIntegrationSchema,
+            'JSON' => $genericIntegrationSchema,
+            'HTML Extract' => $genericIntegrationSchema,
+            'Compression' => $genericIntegrationSchema,
 
+            // --- Other Services ---
+            'Google Analytics' => $genericIntegrationSchema,
+            'Facebook' => $genericIntegrationSchema,
+            'Instagram' => $genericIntegrationSchema,
+            'Twitter' => $genericIntegrationSchema,
+            'LinkedIn' => $genericIntegrationSchema,
+            'Mailchimp' => $genericIntegrationSchema,
+            'SendGrid' => $genericIntegrationSchema,
+            'Mixpanel' => $genericIntegrationSchema,
+            'Calendly' => $genericIntegrationSchema,
+            'Typeform' => $genericIntegrationSchema,
+            'Zoom' => $genericIntegrationSchema,
+            'Spotify' => $genericIntegrationSchema,
+            'YouTube' => $genericIntegrationSchema,
             'RSS Feed' => [
                 'required' => ['url'],
                 'defaults' => [
                     'url' => 'https://example.com/feed.xml',
                 ],
             ],
+            'WordPress' => $genericIntegrationSchema,
+            'Webflow' => $genericIntegrationSchema,
+            'Contentful' => $genericIntegrationSchema,
+            'Algolia' => $genericIntegrationSchema,
         ];
     }
 }

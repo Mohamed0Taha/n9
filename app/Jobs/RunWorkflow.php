@@ -202,6 +202,10 @@ class RunWorkflow implements ShouldQueue
     {
         // Get input for this node
         $input = $this->getNodeInput($node, $nodeResults, $edges);
+        
+        // Resolve variables in parameters (e.g. {{ $json.field }})
+        $node = $this->resolveNodeParameters($node, $input);
+        
         $nodeType = $node['data']['type'] ?? $node['data']['name'] ?? $node['type'] ?? 'Unknown';
         
         Log::info('Executing node', [
@@ -822,7 +826,7 @@ class RunWorkflow implements ShouldQueue
     protected function executeProductivity(array $node, ?array $input): array
     {
         $nodeType = $node['type'] ?? $node['data']['type'] ?? 'Unknown';
-        $action = $node['data']['parameters']['action'] ?? 'create';
+        $action = $node['data']['parameters']['action'] ?? $node['data']['parameters']['operation'] ?? 'create';
         
         return [
             'success' => true,
@@ -883,7 +887,7 @@ class RunWorkflow implements ShouldQueue
     protected function executeDevelopment(array $node, ?array $input): array
     {
         $nodeType = $node['type'] ?? $node['data']['type'] ?? 'Unknown';
-        $action = $node['data']['parameters']['action'] ?? 'get_repository';
+        $action = $node['data']['parameters']['action'] ?? $node['data']['parameters']['operation'] ?? 'get_repository';
         
         return [
             'success' => true,
@@ -988,7 +992,7 @@ class RunWorkflow implements ShouldQueue
     protected function executeMarketing(array $node, ?array $input): array
     {
         $nodeType = $node['type'] ?? $node['data']['type'] ?? 'Unknown';
-        $action = $node['data']['parameters']['action'] ?? 'track_event';
+        $action = $node['data']['parameters']['action'] ?? $node['data']['parameters']['operation'] ?? 'track_event';
         
         return [
             'success' => true,
@@ -1062,7 +1066,7 @@ class RunWorkflow implements ShouldQueue
     protected function executeAdditionalServices(array $node, ?array $input): array
     {
         $nodeType = $node['type'] ?? $node['data']['type'] ?? 'Unknown';
-        $action = $node['data']['parameters']['action'] ?? 'execute';
+        $action = $node['data']['parameters']['action'] ?? $node['data']['parameters']['operation'] ?? 'execute';
         
         return [
             'success' => true,
@@ -1075,5 +1079,92 @@ class RunWorkflow implements ShouldQueue
                 'timestamp' => now()->toISOString(),
             ],
         ];
+    }
+
+    /**
+     * Resolve variables in node parameters
+     */
+    protected function resolveNodeParameters(array $node, ?array $input): array
+    {
+        if (empty($node['data']['parameters'])) {
+            return $node;
+        }
+
+        // Create context for evaluation
+        // Support $json (direct input) and $node (future: access other nodes)
+        $context = [
+            'json' => $input,
+            'now' => now()->toISOString(),
+        ];
+
+        $node['data']['parameters'] = $this->evaluateValue($node['data']['parameters'], $context);
+        return $node;
+    }
+
+    /**
+     * Recursively evaluate values
+     */
+    protected function evaluateValue($value, array $context)
+    {
+        if (is_array($value)) {
+            $result = [];
+            foreach ($value as $k => $v) {
+                $result[$k] = $this->evaluateValue($v, $context);
+            }
+            return $result;
+        }
+
+        if (is_string($value)) {
+            return $this->interpolateString($value, $context);
+        }
+
+        return $value;
+    }
+
+    /**
+     * Interpolate string with variables
+     */
+    protected function interpolateString(string $value, array $context): mixed
+    {
+        // Handle exact match: {{ $json.field }} -> return raw value (could be array/int)
+        if (preg_match('/^{{\s*\$([a-zA-Z0-9_.]+)\s*}}$/', $value, $matches)) {
+            return $this->resolveVariable($matches[1], $context);
+        }
+        
+        // Handle string interpolation: "ID: {{ $json.id }}"
+        if (str_contains($value, '{{')) {
+            return preg_replace_callback('/{{\s*\$([a-zA-Z0-9_.]+)\s*}}/', function($matches) use ($context) {
+                $val = $this->resolveVariable($matches[1], $context);
+                if (is_array($val) || is_object($val)) {
+                    return json_encode($val);
+                }
+                return (string)$val;
+            }, $value);
+        }
+
+        return $value;
+    }
+
+    /**
+     * Resolve single variable from context
+     */
+    protected function resolveVariable(string $path, array $context)
+    {
+        // Remove starting $ if present
+        $path = ltrim($path, '$');
+        
+        // Handle $json.field
+        if (str_starts_with($path, 'json.')) {
+            $key = substr($path, 5); // remove 'json.'
+            return data_get($context['json'], $key);
+        }
+        
+        // Handle $now
+        if ($path === 'now') {
+            return $context['now'];
+        }
+        
+        // Direct context access fallback
+        return data_get($context, $path);
     }
 }

@@ -260,6 +260,27 @@ export const nodeSchemas = {
         default: 'none'
       },
       {
+        name: 'bodyContentType',
+        type: 'select',
+        label: 'Body Content Type',
+        options: [
+          { value: 'json', label: 'JSON' },
+          { value: 'form-urlencoded', label: 'Form-Urlencoded' },
+          { value: 'form-data', label: 'Form-Data' },
+          { value: 'raw', label: 'Raw' }
+        ],
+        default: 'json',
+        showWhen: { method: ['POST', 'PUT', 'PATCH'] }
+      },
+      {
+        name: 'jsonBody',
+        type: 'json',
+        label: 'JSON Body',
+        placeholder: '{"key": "value"}',
+        supportsVariables: true,
+        showWhen: { method: ['POST', 'PUT', 'PATCH'], bodyContentType: 'json' }
+      },
+      {
         name: 'headers',
         type: 'keyValue',
         label: 'Headers',
@@ -272,13 +293,15 @@ export const nodeSchemas = {
         description: 'URL query parameters'
       },
       {
-        name: 'body',
-        type: 'textarea',
-        label: 'Body',
-        placeholder: '{"key": "value"}',
-        rows: 8,
-        supportsVariables: true,
-        showWhen: { method: ['POST', 'PUT', 'PATCH'] }
+        name: 'responseFormat',
+        type: 'select',
+        label: 'Response Format',
+        options: [
+          { value: 'json', label: 'JSON' },
+          { value: 'string', label: 'String' },
+          { value: 'file', label: 'File' }
+        ],
+        default: 'json'
       }
     ]
   },

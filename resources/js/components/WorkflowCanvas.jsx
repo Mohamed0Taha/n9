@@ -13,6 +13,8 @@ import N8nStyleNode from './N8nStyleNode.jsx';
 import ComicEdge from './ComicEdge.jsx';
 import BundleNode from './BundleNode.jsx';
 import BundleZoneNode from './BundleZoneNode.jsx';
+import SimpleModal from './SimpleModal.jsx';
+import { useTheme, THEMES } from '../contexts/ThemeContext.jsx';
 
 const edgeTypes = {
   comic: ComicEdge,
@@ -62,6 +64,7 @@ function WorkflowCanvas(
   { graph, onGraphChange, onSelectionUpdate, selectionMode = 'pan', onNodeSettingsOpen, executionData },
   ref,
 ) {
+  const { theme, isComic } = useTheme();
   const reactFlowWrapper = useRef(null);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
   const hasFitViewRef = useRef(false);
@@ -73,6 +76,76 @@ function WorkflowCanvas(
   const [nodes, setNodes, baseOnNodesChange] = useNodesState(buildNodes(graph));
   const [edges, setEdges, onEdgesChange] = useEdgesState(buildEdges(graph));
   const [nodeExecutionStatus, setNodeExecutionStatus] = useState({});
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'alert',
+    defaultValue: '',
+    onConfirm: () => {},
+    onClose: () => {},
+  });
+
+  const themeConfig = useMemo(() => {
+    switch(theme) {
+      case THEMES.HACKER: return {
+        bgClass: 'bg-black',
+        bgColor: '#000',
+        gridColor: '#22c55e', // Green
+        edgeColor: '#22c55e',
+        textClass: 'text-green-500',
+        subTextClass: 'text-green-700',
+        iconClass: 'text-green-800',
+      };
+      case THEMES.TERMINAL: return {
+        bgClass: 'bg-slate-950',
+        bgColor: '#020617',
+        gridColor: '#f59e0b', // Amber
+        edgeColor: '#f59e0b',
+        textClass: 'text-amber-500',
+        subTextClass: 'text-amber-700',
+        iconClass: 'text-amber-800',
+      };
+      case THEMES.DARK: return {
+        bgClass: 'bg-gray-900',
+        bgColor: '#111827',
+        gridColor: '#374151', // Gray-700
+        edgeColor: '#60a5fa', // Blue-400
+        textClass: 'text-gray-200',
+        subTextClass: 'text-gray-500',
+        iconClass: 'text-gray-700',
+      };
+      case THEMES.PROFESSIONAL: return {
+        bgClass: 'bg-slate-50',
+        bgColor: '#f8fafc',
+        gridColor: '#cbd5e1', // Slate-300
+        edgeColor: '#94a3b8', // Slate-400
+        textClass: 'text-slate-600',
+        subTextClass: 'text-slate-400',
+        iconClass: 'text-slate-300',
+      };
+      default: // COMIC
+        return {
+          bgClass: 'bg-yellow-50',
+          bgColor: '#fefce8',
+          gridColor: '#cbd5e1',
+          edgeColor: '#bef264',
+          textClass: 'text-slate-600',
+          subTextClass: 'text-slate-400',
+          iconClass: 'text-slate-300',
+        };
+    }
+  }, [theme]);
+
+  // Sync graph prop to internal state (Fix for Undo/Redo)
+  useEffect(() => {
+    if (graph) {
+      const newNodes = buildNodes(graph);
+      const newEdges = buildEdges(graph);
+      setNodes(newNodes);
+      setEdges(newEdges);
+    }
+  }, [graph, setNodes, setEdges]);
 
   // Update nodes with execution status
   useEffect(() => {
@@ -902,30 +975,8 @@ function WorkflowCanvas(
     }, 50);
   }, [nodes, edges, setNodes, reactFlowInstance]);
 
-  // Group selected nodes into a bundle
-  const handleGroupNodes = useCallback(() => {
-    // Allow bundling any nodes including bundles (nested bundles)
-    // Exclude only bundleZone nodes (the blue blanket overlays)
-    const selectedNodes = nodes.filter(
-      (node) => node.selected && node.type !== 'bundleZone',
-    );
-    
-    if (selectedNodes.length < 2) {
-      alert(' Please select at least 2 items to create a bundle!');
-      return;
-    }
-
-    // Prompt for custom bundle name
-    const bundleName = prompt(
-      ' Name your bundle!\n\nEnter a name for this bundle (or leave empty for default):',
-      `My Bundle ${Math.floor(Math.random() * 1000)}`
-    );
-    
-    // If user cancels, don't create bundle
-    if (bundleName === null) {
-      return;
-    }
-
+  // Create bundle from nodes
+  const createBundle = useCallback((selectedNodes, bundleName) => {
     // Calculate center position of selected nodes
     const centerX = selectedNodes.reduce((sum, node) => sum + node.position.x, 0) / selectedNodes.length;
     const centerY = selectedNodes.reduce((sum, node) => sum + node.position.y, 0) / selectedNodes.length;
@@ -947,7 +998,7 @@ function WorkflowCanvas(
       type: 'bundle',
       position: { x: centerX - 100, y: centerY - 70 }, // Center the bundle (200x140)
       data: {
-        label: bundleName.trim() || 'Unnamed Bundle',
+        label: bundleName?.trim() || 'Unnamed Bundle',
         bundledNodes: selectedNodes.map((node) => ({
           ...node,
           // Store relative position within bundle
@@ -957,29 +1008,83 @@ function WorkflowCanvas(
           },
         })),
         internalEdges,
-        expanded: false,
+        executions: 0,
+        isBundle: true
       },
-      selected: false,
+      // Bundle size
+      width: 200,
+      height: 140,
+      selected: true,
     };
 
-    // Update external edges to connect to bundle instead
+    // Update external edges to point to/from the bundle
     const updatedExternalEdges = externalEdges.map(edge => {
       if (selectedNodeIds.has(edge.source)) {
+        // Edge coming OUT of bundle
         return { ...edge, source: bundleId, sourceHandle: 'output-0' };
-      } else if (selectedNodeIds.has(edge.target)) {
+      }
+      if (selectedNodeIds.has(edge.target)) {
+        // Edge going INTO bundle
         return { ...edge, target: bundleId, targetHandle: 'input-0' };
       }
       return edge;
     });
 
-    // Remove selected nodes and add bundle
-    const remainingNodes = nodes.filter(node => !selectedNodeIds.has(node.id));
-    setNodes([...remainingNodes, bundleNode]);
-    setEdges(updatedExternalEdges);
+    // Remove bundled nodes and edges, add bundle node and updated edges
+    const remainingNodes = nodes.filter(n => !selectedNodeIds.has(n.id));
+    const remainingEdges = edges.filter(e => 
+      !selectedNodeIds.has(e.source) && !selectedNodeIds.has(e.target)
+    );
 
-    // Update selection state
-    updateSelectionState([]);
-  }, [nodes, edges, setNodes, setEdges, updateSelectionState]);
+    const nextNodes = [...remainingNodes, bundleNode];
+    const nextEdges = [...remainingEdges, ...updatedExternalEdges];
+
+    setNodes(nextNodes);
+    setEdges(nextEdges);
+    
+    if (onGraphChange) {
+      onGraphChange({ nodes: nextNodes, edges: nextEdges });
+    }
+    
+    updateSelectionState([bundleNode]);
+  }, [nodes, edges, setNodes, setEdges, updateSelectionState, onGraphChange]);
+
+  // Group selected nodes into a bundle
+  const handleGroupNodes = useCallback(() => {
+    // Allow bundling any nodes including bundles (nested bundles)
+    // Exclude only bundleZone nodes (the blue blanket overlays)
+    const selectedNodes = nodes.filter(
+      (node) => node.selected && node.type !== 'bundleZone',
+    );
+    
+    if (selectedNodes.length < 2) {
+      setModalConfig({
+        isOpen: true,
+        title: 'Selection Required',
+        message: 'Please select at least 2 items to create a bundle!',
+        type: 'alert',
+        confirmText: 'OK',
+        onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false })),
+        onClose: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
+      });
+      return;
+    }
+
+    // Open prompt modal
+    setModalConfig({
+      isOpen: true,
+      title: 'Name your bundle!',
+      message: 'Enter a name for this bundle (or leave empty for default):',
+      type: 'prompt',
+      defaultValue: `My Bundle ${Math.floor(Math.random() * 1000)}`,
+      confirmText: 'Create Bundle',
+      onConfirm: (bundleName) => {
+        createBundle(selectedNodes, bundleName);
+        setModalConfig(prev => ({ ...prev, isOpen: false }));
+      },
+      onClose: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
+    });
+  }, [nodes, createBundle]);
 
   useImperativeHandle(
     ref,
@@ -1011,13 +1116,13 @@ function WorkflowCanvas(
     return (
       <div
         ref={reactFlowWrapper}
-        className="h-full flex items-center justify-center text-slate-400 bg-slate-50"
+        className={`h-full flex items-center justify-center ${themeConfig.bgClass}`}
         onDrop={onDrop}
         onDragOver={onDragOver}
       >
         <div className="text-center">
           <svg
-            className="mx-auto h-16 w-16 text-slate-300 mb-4"
+            className={`mx-auto h-16 w-16 mb-4 ${themeConfig.iconClass}`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -1029,10 +1134,10 @@ function WorkflowCanvas(
               d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
             />
           </svg>
-          <p className="text-lg font-medium text-slate-600 mb-1">
+          <p className={`text-lg font-medium mb-1 ${themeConfig.textClass}`}>
             Drag and drop nodes to build your workflow
           </p>
-          <p className="text-sm text-slate-400">
+          <p className={`text-sm ${themeConfig.subTextClass}`}>
             Or use the prompt panel to generate workflows with AI
           </p>
         </div>
@@ -1043,7 +1148,7 @@ function WorkflowCanvas(
   return (
     <div 
       ref={reactFlowWrapper} 
-      className="w-full h-full relative"
+      className={`w-full h-full relative ${themeConfig.bgClass}`}
       onDrop={onDrop}
       onDragOver={onDragOver}
     >
@@ -1140,7 +1245,7 @@ function WorkflowCanvas(
         onSelectionChange={onSelectionChange}
         nodeTypes={nodeTypes}
         attributionPosition="bottom-left"
-        className="bg-slate-50"
+        className={themeConfig.bgClass}
         edgeTypes={edgeTypes}
         snapToGrid={true}
         snapGrid={[15, 15]}
@@ -1158,8 +1263,19 @@ function WorkflowCanvas(
         edgesUpdatable={true}
         edgesFocusable={true}
       >
-        <Background color="#cbd5e1" gap={16} size={1} />
+        <Background color={themeConfig.gridColor} gap={16} size={1} />
       </ReactFlow>
+      
+      <SimpleModal
+        isOpen={modalConfig.isOpen}
+        onClose={modalConfig.onClose}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+        defaultValue={modalConfig.defaultValue}
+        confirmText={modalConfig.confirmText}
+        onConfirm={modalConfig.onConfirm}
+      />
     </div>
   );
 }

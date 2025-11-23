@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
+import { useTheme, THEMES } from '../contexts/ThemeContext.jsx';
 import WorkflowCanvas from './WorkflowCanvas.jsx';
 import PromptPanel from './PromptPanel.jsx';
 import NodesCarousel from './NodesCarousel.jsx';
@@ -49,6 +50,70 @@ const initialDraft = {
 };
 
 export default function App() {
+    const { theme, toggleTheme, setTheme, THEMES, isProfessional, isComic, isHacker, isTerminal, isDark } = useTheme();
+    const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
+    
+    const themeStyles = useMemo(() => {
+        const baseButton = "p-2 rounded-lg transition";
+        switch(theme) {
+            case THEMES.PROFESSIONAL: return {
+                app: 'bg-slate-50 font-sans text-slate-900',
+                header: 'bg-white border-b border-slate-200 shadow-sm',
+                divider: 'bg-slate-200',
+                button: `${baseButton} hover:bg-slate-100 text-slate-600`,
+                buttonActive: `${baseButton} bg-blue-100 text-blue-600`,
+                primaryButton: "flex items-center gap-2 px-4 py-2 rounded-lg transition font-bold text-sm bg-blue-600 hover:bg-blue-700 text-white shadow-sm disabled:opacity-50 disabled:cursor-not-allowed",
+                successButton: "flex items-center gap-2 px-3 py-2 rounded-lg transition font-bold text-sm bg-green-600 hover:bg-green-700 text-white shadow-sm",
+                dangerButton: `${baseButton} text-red-500 hover:bg-red-50 disabled:opacity-30`,
+                avatar: "border-slate-200"
+            };
+            case THEMES.HACKER: return {
+                app: 'bg-black font-mono text-green-500',
+                header: 'bg-black border-b border-green-900 shadow-[0_0_15px_rgba(0,255,0,0.1)]',
+                divider: 'bg-green-900',
+                button: `${baseButton} hover:bg-green-900/30 text-green-500 border border-transparent hover:border-green-800`,
+                buttonActive: `${baseButton} bg-green-900/50 text-green-400 border border-green-600`,
+                primaryButton: "flex items-center gap-2 px-4 py-2 rounded-lg transition font-bold text-sm bg-green-900 hover:bg-green-800 text-green-400 border border-green-600 disabled:opacity-50",
+                successButton: "flex items-center gap-2 px-3 py-2 rounded-lg transition font-bold text-sm bg-green-900 hover:bg-green-800 text-green-400 border border-green-600",
+                dangerButton: `${baseButton} text-red-500 hover:bg-red-900/20 border border-transparent hover:border-red-900 disabled:opacity-30`,
+                avatar: "border-green-700 grayscale"
+            };
+            case THEMES.TERMINAL: return {
+                app: 'bg-slate-950 font-mono text-amber-500',
+                header: 'bg-slate-950 border-b border-amber-900',
+                divider: 'bg-amber-900',
+                button: `${baseButton} hover:bg-amber-900/20 text-amber-500`,
+                buttonActive: `${baseButton} bg-amber-900/40 text-amber-400 border border-amber-800`,
+                primaryButton: "flex items-center gap-2 px-4 py-2 rounded-lg transition font-bold text-sm bg-amber-700 hover:bg-amber-600 text-slate-950 font-bold disabled:opacity-50",
+                successButton: "flex items-center gap-2 px-3 py-2 rounded-lg transition font-bold text-sm bg-amber-700 hover:bg-amber-600 text-slate-950 font-bold",
+                dangerButton: `${baseButton} text-red-500 hover:bg-red-900/20 disabled:opacity-30`,
+                avatar: "border-amber-900 sepia"
+            };
+            case THEMES.DARK: return {
+                app: 'bg-gray-900 font-sans text-gray-100',
+                header: 'bg-gray-800 border-b border-gray-700 shadow-md',
+                divider: 'bg-gray-700',
+                button: `${baseButton} hover:bg-gray-700 text-gray-300`,
+                buttonActive: `${baseButton} bg-blue-900/40 text-blue-400`,
+                primaryButton: "flex items-center gap-2 px-4 py-2 rounded-lg transition font-bold text-sm bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50",
+                successButton: "flex items-center gap-2 px-3 py-2 rounded-lg transition font-bold text-sm bg-green-600 hover:bg-green-700 text-white",
+                dangerButton: `${baseButton} text-red-400 hover:bg-red-900/20 disabled:opacity-30`,
+                avatar: "border-gray-600"
+            };
+            default: return { // COMIC
+                app: 'bg-yellow-100 font-comic text-black',
+                header: 'bg-gradient-to-r from-yellow-400 via-orange-400 to-red-500 border-b-4 border-black',
+                divider: 'bg-black opacity-20',
+                button: `${baseButton} tactile-button bg-white border-2 border-black text-black shadow-[2px_2px_0px_#000]`,
+                buttonActive: `${baseButton} tactile-button bg-cyan-400 border-2 border-black shadow-[2px_2px_0px_#000]`,
+                primaryButton: "flex items-center gap-2 px-4 py-2 rounded-lg transition font-bold text-sm tactile-button bg-blue-500 text-white border-2 border-black shadow-[2px_2px_0px_#000] disabled:opacity-50",
+                successButton: "flex items-center gap-2 px-3 py-2 rounded-lg transition font-bold text-sm tactile-button bg-green-400 text-black border-2 border-black shadow-[2px_2px_0px_#000]",
+                dangerButton: `${baseButton} tactile-button bg-red-400 border-2 border-black shadow-[2px_2px_0px_#000] disabled:opacity-50`,
+                avatar: "border-2 border-black"
+            };
+        }
+    }, [theme]);
+
     const [loading, setLoading] = useState(true);
     const [workflows, setWorkflows] = useState([]);
     const [selectedWorkflowId, setSelectedWorkflowId] = useState(null);
@@ -150,520 +215,230 @@ export default function App() {
     const canUndo = historyIndex > 0;
     const canRedo = historyIndex >= 0 && historyIndex < graphHistory.length - 1;
 
-    useEffect(() => {
-        if (!selectedWorkflow) {
-            return;
-        }
-        const graphWithMetadata = enrichGraphWithNodeMetadata(latestGraph);
-        setCurrentGraph(graphWithMetadata);
-        setGraphHistory([graphWithMetadata]);
-        setHistoryIndex(0);
-        if (canvasRef.current?.setGraph) {
-            canvasRef.current.setGraph(graphWithMetadata);
-        }
-    }, [selectedWorkflow, latestGraph]);
-
-    const handleSelectionUpdate = useCallback((selectedNodes = []) => {
-        setSelectionCount(selectedNodes.length);
-        setSelectedNodes(selectedNodes);
-    }, []);
-
-    const handleSelectAllNodes = useCallback(() => {
-        canvasRef.current?.selectAll?.();
-    }, []);
-
-    const handleCopySelection = useCallback(() => {
-        canvasRef.current?.duplicateSelection?.();
-    }, []);
-
-    const handleDeleteSelection = useCallback(() => {
-        canvasRef.current?.deleteSelection?.();
-    }, []);
-
-    const handleQuickSave = useCallback(() => {
-        // Check if user is logged in before saving
-        if (!user) {
-            setShowLoginModal(true);
-            setLoginReason('save_workflow');
-            return;
-        }
-        
-        // User is logged in, proceed with save
-        canvasRef.current?.saveWorkflow?.();
-    }, [user]);
-
-    const handleSaveFromMenu = useCallback(() => {
-        handleQuickSave();
-        setIsEditMenuOpen(false);
-    }, [handleQuickSave]);
-
-    const handleUndo = useCallback(() => {
-        setHistoryIndex((prev) => {
-            if (prev <= 0) {
-                return prev;
-            }
-            const newIndex = prev - 1;
-            const graph = graphHistory[newIndex];
-            if (graph) {
-                setCurrentGraph(graph);
-                canvasRef.current?.setGraph?.(graph);
-            }
-            return newIndex;
-        });
-    }, [graphHistory]);
-
-    const handleRedo = useCallback(() => {
-        setHistoryIndex((prev) => {
-            if (prev < 0 || prev >= graphHistory.length - 1) {
-                return prev;
-            }
-            const newIndex = prev + 1;
-            const graph = graphHistory[newIndex];
-            if (graph) {
-                setCurrentGraph(graph);
-                canvasRef.current?.setGraph?.(graph);
-            }
-            return newIndex;
-        });
-    }, [graphHistory]);
-
-    const toggleSelectionMode = useCallback(() => {
-        setSelectionMode((prev) => (prev === 'select' ? 'pan' : 'select'));
-    }, []);
-
-    const handleNodeSettingsOpen = useCallback((nodeProps) => {
-        const graphNodeWithMeta = nodeProps?.data?.type
-            ? enrichGraphWithNodeMetadata({
-                  nodes: [{ id: nodeProps.id, type: nodeProps.data.type, data: nodeProps.data }],
-                  edges: [],
-              }).nodes[0]
-            : nodeProps;
-
-        setActiveNode(graphNodeWithMeta);
-        setIsNodeSettingsOpen(true);
-    }, []);
-
-    const handleNodeSettingsClose = useCallback(() => {
-        setIsNodeSettingsOpen(false);
-        setActiveNode(null);
-    }, []);
-
-    // Sync activeNode with execution data updates
-    useEffect(() => {
-        // If executionData is cleared (null), clear activeNode execution data too
-        if (!executionData && activeNode) {
-            setActiveNode(prev => {
-                if (!prev) return prev;
-                return {
-                    ...prev,
-                    data: {
-                        ...prev.data,
-                        executionStatus: undefined,
-                        executionTime: undefined,
-                        executionData: undefined,
-                    }
-                };
-            });
-            return;
-        }
-        
-        if (!activeNode || !isNodeSettingsOpen || !executionData?.node_results) {
-            return;
-        }
-        
-        // Check if this is a bundle node
-        const isBundle = activeNode.type === 'bundle' || activeNode.data?.isBundle || activeNode.data?.bundledNodes?.length > 0;
-        
-        if (isBundle && activeNode.data?.bundledNodes?.length) {
-            // For bundle nodes, aggregate execution data from all bundled nodes
-            const bundledNodeIds = activeNode.data.bundledNodes.map(node => node.id);
-            const bundledExecutionData = [];
-            let bundleStatus = 'success';
-            let totalExecutionTime = 0;
-            
-            // Collect execution data from all bundled nodes
-            bundledNodeIds.forEach(nodeId => {
-                const nodeExecData = executionData.node_results[nodeId];
-                if (nodeExecData) {
-                    bundledExecutionData.push(nodeExecData);
-                    totalExecutionTime += nodeExecData.execution_time_ms || 0;
-                    if (nodeExecData.status === 'running') bundleStatus = 'running';
-                    if (nodeExecData.status === 'error') bundleStatus = 'error';
-                }
-            });
-            
-            // If we have execution data from bundled nodes, create aggregated data
-            if (bundledExecutionData.length > 0) {
-                const aggregatedData = {
-                    status: bundleStatus,
-                    execution_time_ms: totalExecutionTime,
-                    // Bundle behaves like a sub-workflow: first node input, last node output
-                    input: bundledExecutionData[0]?.input || null, // First node's input
-                    output: bundledExecutionData[bundledExecutionData.length - 1]?.output || null, // Last node's output
-                    bundled_results: bundledExecutionData, // Store individual results for debugging
-                };
-                
-                setActiveNode(prev => {
-                    if (!prev) return prev;
-                    return {
-                        ...prev,
-                        data: {
-                            ...prev.data,
-                            executionStatus: bundleStatus,
-                            executionTime: totalExecutionTime,
-                            executionData: aggregatedData,
-                        }
-                    };
-                });
-            }
-        } else {
-            // For regular nodes, use execution data directly
-            const nodeExecutionData = executionData.node_results[activeNode.id];
-            if (nodeExecutionData) {
-                // Update activeNode with latest execution data
-                setActiveNode(prev => {
-                    if (!prev) return prev;
-                    return {
-                        ...prev,
-                        data: {
-                            ...prev.data,
-                            executionStatus: nodeExecutionData.status,
-                            executionTime: nodeExecutionData.execution_time_ms,
-                            executionData: nodeExecutionData,
-                        }
-                    };
-                });
-            }
-        }
-    }, [executionData, activeNode?.id, activeNode?.type, activeNode?.data?.bundledNodes, isNodeSettingsOpen]);
-
-    // Get node-specific execution data based on active node type
-    // Each node type has unique input/output data structures matching n8n
-    const currentExecutionData = useMemo(() => {
-        if (!activeNode || !activeNode.data) {
-            return null;
-        }
-        
-        // Get the node type from data
-        const nodeType = activeNode.data.type || activeNode.data.label || activeNode.type || 'HTTP Request';
-        
-        // Get node-specific execution data
-        return getNodeExecutionData(nodeType);
-    }, [activeNode]);
-
-    async function handlePromptSubmit(prompt) {
-        setIsPromptOpen(true);
-        const hasSelection = selectedNodes.length > 0;
-        setGenerateStatus({ 
-            state: 'generating', 
-            message: hasSelection ? 'Editing selected nodes...' : 'Drafting workflow...' 
-        });
-        
-        try {
-            // Prepare selected nodes context (only relevant data)
-            const selectedNodesContext = selectedNodes.map(node => ({
-                id: node.id,
-                type: node.data?.type || node.type,
-                label: node.data?.label,
-                data: node.data,
-                position: node.position
-            }));
-
-            const { data } = await axios.post('/app/ai/generate', { 
-                prompt,
-                selectedNodes: hasSelection ? selectedNodesContext : undefined,
-                mode: hasSelection ? 'edit' : 'create'
-            });
-            
-            const graphWithMetadata = enrichGraphWithNodeMetadata(data.graph);
-            setDraft({ ...data, graph: graphWithMetadata });
-            setGenerateStatus({ state: 'draft-ready', message: 'Draft ready for review.' });
-        } catch (error) {
-            const message = error.response?.data?.message ?? 'Unable to reach AI service.';
-            setGenerateStatus({ state: 'error', message });
-        }
-    }
-
-    async function handleAcceptDraft() {
-        if (!draft.graph?.nodes?.length) {
-            return;
-        }
-        setGenerateStatus({ state: 'saving', message: 'Saving workflow...' });
-        try {
-            const { data } = await axios.post('/app/workflows', draft);
-            setWorkflows((prev) => [data.workflow, ...prev]);
-            setSelectedWorkflowId(data.workflow.id);
-            setDraft(initialDraft);
-            setGenerateStatus({ state: 'saved', message: 'Workflow created.' });
-        } catch (error) {
-            const message = error.response?.data?.message ?? 'Unable to save workflow.';
-            setGenerateStatus({ state: 'error', message });
-        }
-    }
-
-    function handleGraphChange(newGraph) {
+    const handleGraphChange = useCallback((newGraph) => {
         setCurrentGraph(newGraph);
         setGraphHistory((prev) => {
-            const base = historyIndex >= 0 ? prev.slice(0, historyIndex + 1) : prev;
-            const updated = [...base, newGraph];
-            const limited = updated.length > 50 ? updated.slice(updated.length - 50) : updated;
-            setHistoryIndex(limited.length - 1);
-            return limited;
+            const newHistory = prev.slice(0, historyIndex + 1);
+            return [...newHistory, newGraph];
         });
-    }
+        setHistoryIndex((prev) => prev + 1);
+    }, [historyIndex]);
 
-    const handleNodeSettingsUpdate = useCallback(
-        async (updatedNode) => {
-            if (!currentGraph) {
-                return;
-            }
-            const updatedNodes = (currentGraph.nodes ?? []).map((node) =>
-                node.id === updatedNode.id ? { ...node, data: { ...node.data, ...updatedNode.data } } : node,
-            );
-            const nextGraph = { ...currentGraph, nodes: updatedNodes };
-            handleGraphChange(nextGraph);
-            canvasRef.current?.setGraph?.(nextGraph);
-            setActiveNode((prev) => (prev?.id === updatedNode.id ? { ...prev, data: updatedNode.data } : prev));
-            
-            // Save to database immediately so execution uses latest config
-            if (selectedWorkflow?.id) {
-                try {
-                    await axios.patch(`/app/workflows/${selectedWorkflow.id}`, {
-                        graph: nextGraph,
-                    });
-                    console.log('✅ Node configuration saved to database');
-                    
-                    // Refresh user balance if logged in
-                    if (user) {
-                        const { data } = await axios.get('/auth/user');
-                        setUser(data.user);
-                    }
-                } catch (error) {
-                    console.error('Failed to save node configuration:', error);
-                    
-                    if (error.response?.status === 401) {
-                        // Not logged in - show Google login modal
-                        setShowLoginModal(true);
-                        setLoginReason('save_workflow');
-                    } else if (error.response?.status === 402) {
-                        // Insufficient credits
-                        const { required_credits, current_balance, pricing_key } = error.response.data;
-                        setCreditInfo({
-                            required: required_credits,
-                            current: current_balance,
-                            action: pricing_key || 'save_workflow'
-                        });
-                        setShowCreditsModal(true);
-                    }
-                }
-            }
-        },
-        [currentGraph, selectedWorkflow?.id],
-    );
+    const handleUndo = useCallback(() => {
+        if (canUndo) {
+            setHistoryIndex((prev) => prev - 1);
+            setCurrentGraph(graphHistory[historyIndex - 1]);
+        }
+    }, [canUndo, historyIndex, graphHistory]);
 
-    const pollExecutionStatus = useCallback(async (workflowId) => {
+    const handleRedo = useCallback(() => {
+        if (canRedo) {
+            setHistoryIndex((prev) => prev + 1);
+            setCurrentGraph(graphHistory[historyIndex + 1]);
+        }
+    }, [canRedo, historyIndex, graphHistory]);
+
+    const handlePromptSubmit = async (prompt) => {
+        setGenerateStatus({ state: 'generating', message: 'Analyzing request...' });
         try {
-            const { data } = await axios.get(`/app/workflows/${workflowId}/execution`);
-            console.log('📊 Poll response:', {
-                hasRun: !!data.run,
-                status: data.run?.status,
-                nodeResultsCount: Object.keys(data.run?.node_results || {}).length
+            const response = await axios.post('/app/ai/generate', { prompt });
+            const generatedGraph = enrichGraphWithNodeMetadata(response.data.graph);
+            
+            setGenerateStatus({ state: 'success', message: 'Workflow generated!' });
+            setDraft({ ...draft, description: prompt, graph: generatedGraph });
+            setCurrentGraph(generatedGraph);
+            
+            // Add to history
+            handleGraphChange(generatedGraph);
+        } catch (error) {
+            setGenerateStatus({ state: 'error', message: 'Failed to generate workflow' });
+            console.error(error);
+        }
+    };
+
+    const handleAcceptDraft = async () => {
+        try {
+            const { data } = await axios.post('/app/workflows', {
+                name: 'AI Generated Workflow',
+                description: draft.description,
+                graph: currentGraph,
             });
             
-            if (data.run) {
-                setExecutionData(data.run);
-                
-                // Stop polling when execution is complete
-                if (data.run.status === 'success' || data.run.status === 'failed') {
-                    console.log('⏹️ Execution complete, stopping polling');
-                    if (pollingIntervalRef.current) {
-                        clearInterval(pollingIntervalRef.current);
-                        pollingIntervalRef.current = null;
-                    }
-                    if (executionTimeoutRef.current) {
-                        clearTimeout(executionTimeoutRef.current);
-                        executionTimeoutRef.current = null;
-                    }
-                    setIsExecuting(false);
-                    
-                    // Don't show global message - spinners and badges on nodes are enough
-                    setExecutionMessage(null);
-                }
-            }
+            setWorkflows([data.workflow, ...workflows]);
+            setSelectedWorkflowId(data.workflow.id);
+            setIsPromptOpen(false);
         } catch (error) {
-            console.error('Failed to poll execution status', error);
+            console.error('Failed to save workflow', error);
         }
+    };
+
+    const handleSelectionUpdate = useCallback((selection) => {
+        const nodes = Array.isArray(selection) ? selection : (selection?.nodes || []);
+        setSelectionCount(nodes.length);
+        setSelectedNodes(nodes);
     }, []);
 
-    const handleExecute = useCallback(async () => {
-        console.log('🎬 Execute button clicked!');
-        
-        if (!selectedWorkflow) {
-            console.log('❌ No workflow selected');
-            setExecutionMessage({ type: 'error', text: 'No workflow selected' });
-            setTimeout(() => setExecutionMessage(null), 3000);
-            return;
-        }
-        
-        if (isExecuting) {
-            console.log('⚠️ Already executing, ignoring click');
-            return;
-        }
+    const toggleSelectionMode = () => {
+        setSelectionMode(prev => prev === 'pan' ? 'select' : 'pan');
+        // Close menu if open
+        setIsEditMenuOpen(false);
+    };
 
-        console.log('✅ Starting execution for workflow:', selectedWorkflow.id);
+    const handleDeleteSelection = () => {
+        if (canvasRef.current) {
+            canvasRef.current.deleteSelection();
+            setSelectionCount(0);
+            setSelectedNodes([]);
+        }
+    };
+
+    const handleNodeSettingsOpen = (node) => {
+        setActiveNode(node);
+        setIsNodeSettingsOpen(true);
+    };
+
+    const handleNodeSettingsClose = () => {
+        setIsNodeSettingsOpen(false);
+        setActiveNode(null);
+    };
+
+    const handleNodeSettingsUpdate = (updatedNode) => {
+        if (canvasRef.current) {
+            canvasRef.current.updateNode(updatedNode);
+        }
+    };
+
+    const handleExecute = async () => {
+        if (!selectedWorkflow) return;
+        
         setIsExecuting(true);
-        setExecutionData(null);
-        
-        // Clear activeNode execution data for fresh start
-        setActiveNode(prev => {
-            if (!prev) return prev;
-            return {
-                ...prev,
-                data: {
-                    ...prev.data,
-                    executionStatus: undefined,
-                    executionTime: undefined,
-                    executionData: undefined,
-                }
-            };
-        });
-        
-        // Don't show global message - users will see spinners on individual nodes
-        setExecutionMessage(null);
+        setExecutionMessage({ type: 'info', text: 'Initializing execution environment...' });
+        setExecutionData(null); // Clear previous data
 
         try {
-            console.log('📤 Sending execute request...');
-            const response = await axios.post(`/app/workflows/${selectedWorkflow.id}/execute`);
-            console.log('✅ Execute request successful:', response.data);
+            // 1. Save current state first
+            await handleQuickSave();
             
-            // DON'T update the workflow - it would replace current graph with old saved version
-            // Just start polling for execution status
+            setExecutionMessage({ type: 'info', text: 'Dispatching workflow execution...' });
 
-            // Start polling for execution status
-            if (pollingIntervalRef.current) {
-                clearInterval(pollingIntervalRef.current);
-            }
+            // 2. Trigger execution
+            const { data } = await axios.post(`/app/workflows/${selectedWorkflowId}/execute`);
             
-            // Poll immediately to catch running states
-            console.log('🚀 Starting polling');
-            pollExecutionStatus(selectedWorkflow.id);
+            // 3. Poll for results
+            pollExecutionStatus(selectedWorkflowId);
             
-            // Then poll every 250ms for real-time updates (balanced between responsiveness and performance)
-            pollingIntervalRef.current = setInterval(() => {
-                pollExecutionStatus(selectedWorkflow.id);
-            }, 250);
-            
-            // Safeguard: Re-enable button after 30 seconds max
-            if (executionTimeoutRef.current) {
-                clearTimeout(executionTimeoutRef.current);
-            }
-            executionTimeoutRef.current = setTimeout(() => {
-                if (pollingIntervalRef.current) {
-                    console.log('⚠️ Execution timeout - stopping polling');
-                    clearInterval(pollingIntervalRef.current);
-                    pollingIntervalRef.current = null;
-                    setIsExecuting(false);
-                }
-                executionTimeoutRef.current = null;
-            }, 30000);
         } catch (error) {
-            console.error('❌ Execute request failed:', error);
-            const message = error.response?.data?.message ?? 'Failed to execute workflow';
-            setExecutionMessage({ type: 'error', text: `❌ ${message}` });
-            setTimeout(() => setExecutionMessage(null), 5000);
+            console.error('Execution failed', error);
+            setExecutionMessage({ type: 'error', text: 'Failed to start execution' });
             setIsExecuting(false);
         }
-    }, [selectedWorkflow, pollExecutionStatus, isExecuting]);
-    
-    // Cleanup polling and timeout on unmount
-    useEffect(() => {
-        return () => {
-            if (pollingIntervalRef.current) {
-                clearInterval(pollingIntervalRef.current);
+    };
+
+    const pollExecutionStatus = (workflowId) => {
+        let attempts = 0;
+        const maxAttempts = 60; // 1 minute timeout
+        
+        if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+        
+        pollingIntervalRef.current = setInterval(async () => {
+            attempts++;
+            try {
+                const { data } = await axios.get(`/app/workflows/${workflowId}/execution`);
+                
+                if (data.status === 'completed' || data.status === 'success') {
+                    clearInterval(pollingIntervalRef.current);
+                    setIsExecuting(false);
+                    setExecutionMessage({ type: 'success', text: 'Workflow executed successfully!' });
+                    setExecutionData(data.node_results); // Update overlay data
+                    
+                    // Clear success message after 3s
+                    setTimeout(() => setExecutionMessage(null), 3000);
+                } else if (data.status === 'failed') {
+                    clearInterval(pollingIntervalRef.current);
+                    setIsExecuting(false);
+                    setExecutionMessage({ type: 'error', text: 'Workflow execution failed.' });
+                    setExecutionData(data.node_results);
+                } else {
+                    // Still running - update intermediate status if available
+                    if (data.node_results) {
+                        setExecutionData(data.node_results);
+                    }
+                }
+                
+                if (attempts >= maxAttempts) {
+                    clearInterval(pollingIntervalRef.current);
+                    setIsExecuting(false);
+                    setExecutionMessage({ type: 'error', text: 'Execution timed out.' });
+                }
+            } catch (error) {
+                console.error('Polling error', error);
             }
-            if (executionTimeoutRef.current) {
-                clearTimeout(executionTimeoutRef.current);
-            }
-        };
-    }, []);
+        }, 1000);
+    };
 
-    // Handle workflow upload
-    const handleUpload = useCallback(async (event) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
-
-        const formData = new FormData();
-        formData.append('file', file);
-
+    const handleQuickSave = async () => {
+        if (!selectedWorkflow) return;
+        
         try {
-            const { data } = await axios.post('/app/workflows/upload', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
+            await axios.patch(`/app/workflows/${selectedWorkflowId}`, {
+                graph: currentGraph
             });
-
-            // Set the imported workflow as draft
-            setDraft(data.workflow);
-            setGenerateStatus({ state: 'draft-ready', message: 'Workflow imported successfully!' });
-            setIsPromptOpen(true);
-        } catch (error) {
-            const message = error.response?.data?.message ?? 'Failed to import workflow';
-            alert('Import Error: ' + message);
-        }
-
-        // Reset file input
-        event.target.value = '';
-    }, []);
-
-    // Handle workflow download
-    const handleDownload = useCallback(async () => {
-        if (!user) {
-            setShowLoginModal(true);
-            setLoginReason('download_workflow');
-            return;
-        }
-
-        if (!selectedWorkflow) {
-            alert('No workflow selected');
-            return;
-        }
-
-        try {
-            const response = await axios.get(`/app/workflows/${selectedWorkflow.id}/download`, {
-                responseType: 'blob',
-            });
-
-            // Create blob link to download
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', `${selectedWorkflow.name}.json`);
-            document.body.appendChild(link);
-            link.click();
-            link.parentNode.removeChild(link);
-            window.URL.revokeObjectURL(url);
-
-            // Refresh user balance
-            const { data } = await axios.get('/auth/user');
-            setUser(data.user);
+            
+            // Show brief success toast (using execution message for now)
+            setExecutionMessage({ type: 'success', text: 'Workflow saved!' });
+            setTimeout(() => setExecutionMessage(null), 2000);
         } catch (error) {
             if (error.response?.status === 401) {
                 setShowLoginModal(true);
-                setLoginReason('download_workflow');
+                setLoginReason('save_workflow');
             } else if (error.response?.status === 402) {
-                const { required_credits, current_balance } = error.response.data;
                 setCreditInfo({
-                    required: required_credits,
-                    current: current_balance,
-                    action: 'download_workflow'
+                    required: error.response.data.required_credits,
+                    current: error.response.data.current_balance,
+                    action: 'Save Workflow'
                 });
                 setShowCreditsModal(true);
             } else {
-                const message = error.response?.data?.message ?? 'Failed to download workflow';
-                alert('Download Error: ' + message);
+                console.error('Save failed', error);
+                setExecutionMessage({ type: 'error', text: 'Failed to save workflow' });
             }
         }
-    }, [user, selectedWorkflow]);
+    };
+
+    const handleUpload = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('workflow', file);
+
+        try {
+            setLoading(true);
+            const { data } = await axios.post('/app/workflows/upload', formData);
+            setWorkflows([data.workflow, ...workflows]);
+            setSelectedWorkflowId(data.workflow.id);
+            setExecutionMessage({ type: 'success', text: 'Workflow imported successfully!' });
+            setTimeout(() => setExecutionMessage(null), 3000);
+        } catch (error) {
+            console.error('Upload failed', error);
+            setExecutionMessage({ type: 'error', text: 'Failed to import workflow' });
+        } finally {
+            setLoading(false);
+            // Reset file input
+            event.target.value = '';
+        }
+    };
+
+    const handleDownload = () => {
+        if (!selectedWorkflowId) return;
+        window.location.href = `/app/workflows/${selectedWorkflowId}/download`;
+    };
+
+    useEffect(() => {
+        return () => {
+            if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+        };
+    }, []);
 
     if (loading) {
         return (
@@ -678,354 +453,248 @@ export default function App() {
 
     return (
         <>
-        <div className="h-screen flex flex-col bg-yellow-100 overflow-hidden" style={{ fontFamily: "'Comic Neue', 'Bangers', cursive" }}>
+        <div className={`fixed inset-0 flex flex-col overflow-hidden ${themeStyles.app}`} style={isComic ? { fontFamily: "'Comic Neue', 'Bangers', cursive" } : {}}>
             {/* Header */}
-            <header className="flex-shrink-0 px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 bg-gradient-to-r from-yellow-400 via-orange-400 to-red-500 border-b-2 sm:border-b-4 border-black flex flex-wrap items-center justify-between gap-2 sm:gap-3 md:gap-4 z-10" style={{ boxShadow: '2px 2px 0px #000' }}>
-                <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
+            <header className={`flex-shrink-0 px-4 py-3 flex flex-wrap items-center justify-between gap-4 z-10 ${themeStyles.header}`} style={isComic ? { boxShadow: '2px 2px 0px #000' } : {}}>
+                
+                <div className="flex items-center gap-3">
                     <button
                         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                        className="tactile-button p-2 sm:p-2.5 md:p-3 bg-white hover:bg-yellow-300 rounded-lg transition border-2 sm:border-3 border-black min-h-[44px] min-w-[44px]"
+                        className={themeStyles.button}
                         title={isSidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
-                        style={{ boxShadow: '2px 2px 0px #000' }}
-                        aria-label="Toggle sidebar"
+                        style={isComic ? { boxShadow: '2px 2px 0px #000' } : {}}
                     >
-                        <svg className="w-5 h-5 sm:w-6 sm:h-6 text-black stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                         </svg>
                     </button>
+
                     <div>
-                        <h1 className="text-base sm:text-xl md:text-2xl lg:text-3xl font-bold text-black flex items-center gap-1 sm:gap-2" style={{ fontFamily: "'Bangers', cursive", textShadow: '2px 2px 0px #fff, 3px 3px 0px #000', letterSpacing: '1px' }}>
-                            <span className="text-lg sm:text-2xl md:text-3xl">⚡</span>
-                            <span className="hidden sm:inline">N8N WORKFLOW AUTOMATION!</span>
-                            <span className="sm:hidden">N8N</span>
-                        </h1>
-                        <p className="hidden md:block text-xs md:text-sm text-black font-bold" style={{ fontFamily: "'Comic Neue', cursive" }}>
-                            POW! Build workflows visually • BAM! 100+ integrations
-                        </p>
+                        {!isComic ? (
+                            <div className="flex items-center gap-3">
+                                <div className={`w-8 h-8 rounded-md flex items-center justify-center font-bold text-lg ${
+                                    isHacker ? 'bg-green-900 text-green-400' : 
+                                    isTerminal ? 'bg-amber-900/50 text-amber-500' :
+                                    isDark ? 'bg-blue-900 text-blue-200' :
+                                    'bg-blue-600 text-white'
+                                }`}>
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h1 className={`text-lg font-semibold leading-none ${isHacker ? 'text-green-500' : isTerminal ? 'text-amber-500' : isDark ? 'text-gray-100' : 'text-slate-900'}`}>Workflow AI</h1>
+                                    <p className={`text-xs ${isHacker ? 'text-green-700' : isTerminal ? 'text-amber-700' : isDark ? 'text-gray-500' : 'text-slate-500'}`}>Enterprise Automation</p>
+                                </div>
+                            </div>
+                        ) : (
+                            <h1 className="text-xl sm:text-2xl font-bold text-black flex items-center gap-2" style={{ fontFamily: "'Bangers', cursive", letterSpacing: '1px', textShadow: '2px 2px 0px #fff' }}>
+                                <span>⚡</span>
+                                <span>N8N WORKFLOW</span>
+                            </h1>
+                        )}
                     </div>
                 </div>
-                <div className="flex items-center gap-1 sm:gap-2 md:gap-3 order-last lg:order-none w-full lg:w-auto justify-center lg:justify-start mt-2 lg:mt-0">
-                    <div className="flex items-center gap-1 sm:gap-2">
-                        <button
-                            type="button"
-                            onClick={toggleSelectionMode}
-                            className={`hidden lg:flex tactile-button w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 flex-col items-center justify-center gap-0.5 px-1 sm:px-2 py-1 rounded-lg text-[10px] sm:text-[11px] font-bold ${
-                                selectionMode === 'select'
-                                    ? 'bg-cyan-400 text-black border-2 md:border-3 lg:border-4 border-black'
-                                    : 'bg-white text-black border-2 md:border-3 lg:border-4 border-black'
-                            }`}
-                            style={{ boxShadow: '2px 2px 0px #000', fontFamily: "'Comic Neue', cursive" }}
-                            title={selectionMode === 'select' ? 'Box selection enabled' : 'Enable box selection'}
-                            aria-pressed={selectionMode === 'select'}
-                        >
-                            <span className="w-6 h-6 border-2 border-dashed border-current rounded mb-0.5"></span>
-                            <span className="w-6 h-px bg-current opacity-40 mb-0.5"></span>
-                            <svg className="w-3 h-3 text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 9l6 6 6-6" />
-                            </svg>
-                            <span className="text-[10px] uppercase tracking-wide leading-none">Select</span>
-                        </button>
-                        <div className="flex items-center gap-1 sm:gap-2">
-                            <button
-                                type="button"
-                                onClick={handleUndo}
-                                disabled={!canUndo}
-                                className="hidden md:flex tactile-button w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 flex-col items-center justify-center gap-0.5 px-1 sm:px-2 py-1 rounded-lg bg-white text-black border-2 md:border-3 lg:border-4 border-black disabled:opacity-30 disabled:hover:scale-100"
-                                style={{ boxShadow: '2px 2px 0px #000', fontFamily: "'Comic Neue', cursive" }}
-                                title="Undo"
-                                aria-label="Undo"
-                            >
-                                <span className="material-symbols-outlined text-[22px] leading-none">
-                                    undo
-                                </span>
-                                <span className="text-[10px] uppercase tracking-wide leading-none text-slate-500">
-                                    Undo
-                                </span>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleRedo}
-                                disabled={!canRedo}
-                                className="hidden md:flex tactile-button w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 flex-col items-center justify-center gap-0.5 px-1 sm:px-2 py-1 rounded-lg bg-white text-black border-2 md:border-3 lg:border-4 border-black disabled:opacity-30 disabled:hover:scale-100"
-                                style={{ boxShadow: '2px 2px 0px #000', fontFamily: "'Comic Neue', cursive" }}
-                                title="Redo"
-                                aria-label="Redo"
-                            >
-                                <span className="material-symbols-outlined text-[22px] leading-none">
-                                    redo
-                                </span>
-                                <span className="text-[10px] uppercase tracking-wide leading-none text-slate-500">
-                                    Redo
-                                </span>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleQuickSave}
-                                className="tactile-button w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 flex flex-col items-center justify-center gap-0.5 px-1 sm:px-2 py-1 rounded-lg bg-green-400 text-black border-2 sm:border-3 md:border-4 border-black min-h-[48px] min-w-[48px]"
-                                style={{ boxShadow: '2px 2px 0px #000', fontFamily: "'Comic Neue', cursive" }}
-                                title="Quick save"
-                                aria-label="Save"
-                            >
-                                <span className="material-symbols-outlined text-lg sm:text-[20px] md:text-[22px] leading-none">
-                                    save
-                                </span>
-                                <span className="hidden sm:block text-[9px] sm:text-[10px] uppercase tracking-wide leading-none text-black font-bold">
-                                    SAVE
-                                </span>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleDeleteSelection}
-                                disabled={!selectionCount}
-                                className="hidden sm:flex tactile-button w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 flex-col items-center justify-center gap-0.5 px-1 sm:px-2 py-1 rounded-lg bg-red-400 text-black border-2 sm:border-3 md:border-4 border-black disabled:opacity-30 disabled:hover:scale-100"
-                                style={{ boxShadow: '2px 2px 0px #000', fontFamily: "'Comic Neue', cursive" }}
-                                title="Delete selection"
-                                aria-label="Delete selection"
-                            >
-                                <span className="material-symbols-outlined text-[22px] leading-none">
-                                    delete
-                                </span>
-                                <span className="text-[10px] uppercase tracking-wide leading-none text-black font-bold">
-                                    ZAP!
-                                </span>
-                            </button>
-                            {/* Upload Button */}
-                            <label className="hidden md:flex tactile-button w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 flex-col items-center justify-center gap-0.5 px-1 sm:px-2 py-1 rounded-lg bg-blue-400 text-black border-2 sm:border-3 md:border-4 border-black cursor-pointer hover:scale-105 transition-transform min-h-[48px] min-w-[48px]"
-                                style={{ boxShadow: '2px 2px 0px #000', fontFamily: "'Comic Neue', cursive" }}
-                                title="Upload n8n workflow (JSON)"
-                            >
-                                <input
-                                    type="file"
-                                    accept=".json,application/json"
-                                    onChange={handleUpload}
-                                    className="hidden"
-                                />
-                                <span className="material-symbols-outlined text-lg sm:text-[20px] md:text-[22px] leading-none">
-                                    upload
-                                </span>
-                                <span className="hidden sm:block text-[9px] sm:text-[10px] uppercase tracking-wide leading-none text-black font-bold">
-                                    UPLOAD
-                                </span>
-                            </label>
-                            {/* Download Button */}
-                            <button
-                                type="button"
-                                onClick={handleDownload}
-                                disabled={!selectedWorkflow}
-                                className="hidden md:flex tactile-button w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 flex-col items-center justify-center gap-0.5 px-1 sm:px-2 py-1 rounded-lg bg-purple-400 text-black border-2 sm:border-3 md:border-4 border-black disabled:opacity-30 disabled:hover:scale-100 min-h-[48px] min-w-[48px]"
-                                style={{ boxShadow: '2px 2px 0px #000', fontFamily: "'Comic Neue', cursive" }}
-                                title="Download workflow (10 credits)"
-                                aria-label="Download"
-                            >
-                                <span className="material-symbols-outlined text-lg sm:text-[20px] md:text-[22px] leading-none">
-                                    download
-                                </span>
-                                <span className="hidden sm:block text-[9px] sm:text-[10px] uppercase tracking-wide leading-none text-black font-bold">
-                                    DOWNLOAD
-                                </span>
-                            </button>
-                            {/* Credentials Button */}
-                            {user && (
-                                <button
-                                    type="button"
-                                    onClick={() => setShowCredentialsModal(true)}
-                                    className="hidden lg:flex tactile-button w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 flex-col items-center justify-center gap-0.5 px-1 sm:px-2 py-1 rounded-lg bg-pink-400 text-black border-2 sm:border-3 md:border-4 border-black min-h-[48px] min-w-[48px]"
-                                    style={{ boxShadow: '2px 2px 0px #000', fontFamily: "'Comic Neue', cursive" }}
-                                    title="Manage API Keys & Credentials"
-                                    aria-label="Credentials"
-                                >
-                                    <span className="text-2xl leading-none">🔐</span>
-                                    <span className="hidden sm:block text-[9px] sm:text-[10px] uppercase tracking-wide leading-none text-black font-bold">
-                                        KEYS
-                                    </span>
-                                </button>
-                            )}
-                            <button
-                                type="button"
-                                onClick={() => canvasRef.current?.groupNodes?.()}
-                                disabled={selectionCount < 2}
-                                className="hidden xl:flex tactile-button w-14 h-14 lg:w-16 lg:h-16 flex-col items-center justify-center gap-0.5 px-1 sm:px-2 py-1 rounded-lg bg-orange-400 text-black border-2 md:border-3 lg:border-4 border-black disabled:opacity-30"
-                                style={{ boxShadow: '2px 2px 0px #000', fontFamily: "'Comic Neue', cursive" }}
-                                title="Group selected nodes into a bundle"
-                                aria-label="Bundle nodes"
-                            >
-                                <svg className="w-5 h-5" viewBox="0 0 48 48" fill="none">
-                                    {/* Stacked colored bars */}
-                                    <rect x="8" y="6" width="32" height="5" rx="0.5" fill="#22c55e"/>
-                                    <rect x="8" y="12" width="32" height="5" rx="0.5" fill="#eab308"/>
-                                    <rect x="8" y="18" width="32" height="5" rx="0.5" fill="#f97316"/>
-                                    <rect x="8" y="24" width="32" height="5" rx="0.5" fill="#ef4444"/>
-                                    <rect x="8" y="30" width="32" height="5" rx="0.5" fill="#a855f7"/>
-                                    <rect x="8" y="36" width="32" height="5" rx="0.5" fill="#3b82f6"/>
-                                    
-                                    {/* Belt with buckle */}
-                                    <rect x="6" y="19" width="36" height="10" rx="1" fill="#d97706"/>
-                                    <rect x="18" y="21" width="12" height="6" rx="0.5" fill="#e5e5e5" stroke="#525252" strokeWidth="0.8"/>
-                                    <rect x="20" y="22.5" width="8" height="3" rx="0.3" fill="none" stroke="#404040" strokeWidth="0.8"/>
-                                    <circle cx="24" cy="24" r="0.8" fill="#262626"/>
-                                </svg>
-                                <span className="text-[10px] uppercase tracking-wide leading-none text-black font-bold">
-                                    BUNDLE
-                                </span>
-                            </button>
-                        </div>
-                    </div>
-                    <div className="relative" ref={editMenuRef}>
-                        <button
-                            type="button"
-                            className="tactile-button flex items-center gap-1 text-xs sm:text-sm font-bold text-black px-2 sm:px-3 md:px-4 h-12 sm:h-14 md:h-16 rounded-lg bg-purple-400 border-2 sm:border-3 md:border-4 border-black min-h-[48px]"
-                            onClick={() => setIsEditMenuOpen((prev) => !prev)}
-                            style={{ boxShadow: '2px 2px 0px #000', fontFamily: "'Bangers', cursive", letterSpacing: '0.5px' }}
-                            aria-haspopup="true"
-                            aria-expanded={isEditMenuOpen}
-                        >
-                            <span className="hidden sm:inline">Edit</span>
-                            <span className="sm:hidden text-base">⋮</span>
-                            <svg className={`hidden sm:block w-3 h-3 sm:w-4 sm:h-4 transition-transform ${isEditMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
-                        </button>
-                        {isEditMenuOpen && (
-                            <div className="absolute right-0 mt-2 w-64 bg-white border border-slate-200 rounded-xl shadow-2xl p-4 space-y-3 z-20">
-                                <div>
-                                    <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                                        Selection
-                                    </div>
-                                    <p className="text-sm text-slate-800">
-                                        {selectionCount > 0 ? `${selectionCount} item${selectionCount > 1 ? 's' : ''} selected` : 'No nodes selected'}
-                                    </p>
-                                    <p className="text-[11px] text-slate-500 mt-1">
-                                        Right-click and drag to draw a selection box.
-                                    </p>
-                                </div>
-                                <div className="space-y-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            handleSelectAllNodes();
-                                            setIsEditMenuOpen(false);
-                                        }}
-                                        className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 transition"
-                                    >
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        Select all
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            handleCopySelection();
-                                            setIsEditMenuOpen(false);
-                                        }}
-                                        className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 transition disabled:opacity-40 disabled:cursor-not-allowed"
-                                        disabled={!selectionCount}
-                                    >
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h8M8 11h8m-5 4h5M6 7h.01M6 11h.01M6 15h.01" />
-                                        </svg>
-                                        Copy selection
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            handleDeleteSelection();
-                                            setIsEditMenuOpen(false);
-                                        }}
-                                        className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition disabled:opacity-40 disabled:cursor-not-allowed"
-                                        disabled={!selectionCount}
-                                    >
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                        </svg>
-                                        Delete selection
-                                    </button>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={handleSaveFromMenu}
-                                    className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-semibold text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition"
-                                >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                                    </svg>
-                                    Save workflow
-                                </button>
-                            </div>
-                        )}
-                    </div>
 
-                    {/* User Info and Credits */}
-                    <div className="flex items-center gap-1 sm:gap-2 md:gap-3 ml-auto">
-                        {user ? (
+                <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
+                    {/* Theme Selector Dropdown */}
+                    <div className="relative">
+                        <button
+                            onClick={() => setIsThemeMenuOpen(!isThemeMenuOpen)}
+                            className={themeStyles.button}
+                            style={isComic ? { boxShadow: '2px 2px 0px #000' } : {}}
+                            title="Select Theme"
+                        >
+                            {theme === THEMES.HACKER ? '🤖' : theme === THEMES.TERMINAL ? '💻' : theme === THEMES.DARK ? '🌙' : theme === THEMES.COMIC ? '🎨' : '💼'}
+                        </button>
+                        
+                        {isThemeMenuOpen && (
                             <>
-                                {/* Credit Balance */}
-                                <div className="flex items-center gap-1 sm:gap-2 bg-yellow-300 px-2 sm:px-3 md:px-4 h-12 sm:h-14 md:h-16 rounded-lg border-2 sm:border-3 border-black"
-                                     style={{ boxShadow: '2px 2px 0px #000' }}>
-                                    <span className="text-lg sm:text-xl md:text-2xl">💰</span>
-                                    <span className="font-bold text-sm sm:text-base md:text-lg">{user.credit_balance}</span>
-                                    <span className="hidden sm:inline text-xs text-gray-700">credits</span>
+                                <div 
+                                    className="fixed inset-0 z-40" 
+                                    onClick={() => setIsThemeMenuOpen(false)}
+                                ></div>
+                                <div className={`absolute right-0 mt-2 w-48 rounded-lg shadow-xl z-50 border overflow-hidden ${
+                                    isComic ? 'bg-white border-2 border-black' : 
+                                    isHacker ? 'bg-black border-green-900 shadow-[0_0_10px_rgba(0,255,0,0.2)]' : 
+                                    isTerminal ? 'bg-slate-950 border-amber-900 shadow-[0_0_10px_rgba(245,158,11,0.2)]' :
+                                    isDark ? 'bg-gray-800 border-gray-700' :
+                                    'bg-white border-slate-200'
+                                }`} style={isComic ? { boxShadow: '4px 4px 0px #000' } : {}}>
+                                    {[
+                                        { id: THEMES.PROFESSIONAL, label: 'Professional', icon: '💼' },
+                                        { id: THEMES.COMIC, label: 'Comic', icon: '🎨' },
+                                        { id: THEMES.DARK, label: 'Dark Mode', icon: '🌙' },
+                                        { id: THEMES.HACKER, label: 'Hacker', icon: '🤖' },
+                                        { id: THEMES.TERMINAL, label: 'Terminal', icon: '💻' },
+                                    ].map((opt) => (
+                                        <button
+                                            key={opt.id}
+                                            onClick={() => {
+                                                setTheme(opt.id);
+                                                setIsThemeMenuOpen(false);
+                                            }}
+                                            className={`w-full px-4 py-2 text-left flex items-center gap-3 transition-colors ${
+                                                theme === opt.id ? 'font-bold' : ''
+                                            } ${
+                                                isComic ? 'hover:bg-yellow-100 text-black' :
+                                                isHacker ? 'hover:bg-green-900/30 text-green-500' :
+                                                isTerminal ? 'hover:bg-amber-900/30 text-amber-500' :
+                                                isDark ? 'hover:bg-gray-700 text-gray-200' :
+                                                'hover:bg-slate-50 text-slate-700'
+                                            }`}
+                                        >
+                                            <span>{opt.icon}</span>
+                                            <span>{opt.label}</span>
+                                            {theme === opt.id && (
+                                                <span className="ml-auto text-xs">✓</span>
+                                            )}
+                                        </button>
+                                    ))}
                                 </div>
-
-                                {/* User Avatar and Name */}
-                                <div className="hidden sm:flex items-center gap-1 sm:gap-2 bg-white px-2 sm:px-3 h-12 sm:h-14 md:h-16 rounded-lg border-2 sm:border-3 border-black max-w-[100px] sm:max-w-[150px] md:max-w-[200px]"
-                                     style={{ boxShadow: '2px 2px 0px #000' }}>
-                                    {user.avatar && (
-                                        <img src={user.avatar} alt={user.name} className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 border-black flex-shrink-0" />
-                                    )}
-                                    <span className="font-medium text-xs sm:text-sm truncate">{user.name}</span>
-                                </div>
-
-                                {/* Logout Button */}
-                                <button
-                                    onClick={async () => {
-                                        await axios.post('/auth/logout');
-                                        setUser(null);
-                                        window.location.reload();
-                                    }}
-                                    className="tactile-button bg-red-400 text-white px-2 sm:px-3 md:px-4 h-12 sm:h-14 md:h-16 rounded-lg text-xs sm:text-sm font-bold border-2 sm:border-3 border-black hover:bg-red-500 min-h-[48px]"
-                                    style={{ boxShadow: '2px 2px 0px #000' }}
-                                >
-                                    <span className="hidden sm:inline">Logout</span>
-                                    <span className="sm:hidden">🚪</span>
-                                </button>
                             </>
-                        ) : (
-                            <button
-                                onClick={() => {
-                                    setShowLoginModal(true);
-                                    setLoginReason('general');
-                                }}
-                                className="tactile-button bg-blue-500 text-white px-3 sm:px-4 md:px-6 h-12 sm:h-14 md:h-16 rounded-lg text-xs sm:text-sm font-bold border-2 sm:border-3 border-black hover:bg-blue-600 flex items-center gap-1 sm:gap-2 min-h-[48px]"
-                                style={{ boxShadow: '2px 2px 0px #000' }}
-                            >
-                                <span className="text-base sm:text-lg">🔐</span>
-                                <span className="hidden sm:inline">Sign In</span>
-                                <span className="sm:hidden text-xs">In</span>
-                            </button>
                         )}
                     </div>
+
+                    <div className={`h-8 w-px ${themeStyles.divider}`}></div>
+
+                    {/* Select Mode */}
+                    <button
+                        onClick={toggleSelectionMode}
+                        className={selectionMode === 'select' ? themeStyles.buttonActive : themeStyles.button}
+                        style={isComic ? { boxShadow: '2px 2px 0px #000' } : {}}
+                        title={selectionMode === 'select' ? 'Selection Mode Active' : 'Enable Selection Mode'}
+                    >
+                        <span className="material-symbols-outlined text-xl">select_all</span>
+                    </button>
+
+                    {/* History Controls */}
+                    <div className="flex items-center gap-1">
+                        <button
+                            onClick={handleUndo}
+                            disabled={!canUndo}
+                            className={`${themeStyles.button} disabled:opacity-30`}
+                            style={isComic ? { boxShadow: '2px 2px 0px #000' } : {}}
+                            title="Undo"
+                        >
+                            <span className="material-symbols-outlined text-xl">undo</span>
+                        </button>
+                        <button
+                            onClick={handleRedo}
+                            disabled={!canRedo}
+                            className={`${themeStyles.button} disabled:opacity-30`}
+                            style={isComic ? { boxShadow: '2px 2px 0px #000' } : {}}
+                            title="Redo"
+                        >
+                            <span className="material-symbols-outlined text-xl">redo</span>
+                        </button>
+                    </div>
+
+                    <div className={`h-8 w-px ${themeStyles.divider}`}></div>
+
+                    {/* Tools Group */}
+                    <div className="flex items-center gap-1">
+                        {/* Credentials */}
+                        {user && (
+                            <button
+                                onClick={() => setShowCredentialsModal(true)}
+                                className={themeStyles.button}
+                                style={isComic ? { boxShadow: '2px 2px 0px #000' } : {}}
+                                title="Manage Credentials"
+                            >
+                                <span className="text-xl">🔐</span>
+                            </button>
+                        )}
+
+                        {/* Upload */}
+                        <label 
+                            className={`${themeStyles.button} cursor-pointer`}
+                            style={isComic ? { boxShadow: '2px 2px 0px #000' } : {}}
+                            title="Upload Workflow"
+                        >
+                            <input type="file" accept=".json" onChange={handleUpload} className="hidden" />
+                            <span className="material-symbols-outlined text-xl">upload</span>
+                        </label>
+
+                        {/* Download */}
+                        <button
+                            onClick={handleDownload}
+                            disabled={!selectedWorkflow}
+                            className={`${themeStyles.button} disabled:opacity-50`}
+                            style={isComic ? { boxShadow: '2px 2px 0px #000' } : {}}
+                            title="Download Workflow"
+                        >
+                            <span className="material-symbols-outlined text-xl">download</span>
+                        </button>
+                        
+                        {/* Bundle */}
+                        <button
+                            onClick={() => canvasRef.current?.groupNodes?.()}
+                            disabled={selectionCount < 2}
+                            className={`${themeStyles.button} disabled:opacity-50`}
+                            style={isComic ? { boxShadow: '2px 2px 0px #000' } : {}}
+                            title="Bundle Selection"
+                        >
+                            <span className="text-xl">📦</span>
+                        </button>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <button
+                        onClick={handleDeleteSelection}
+                        disabled={!selectionCount}
+                        className={themeStyles.dangerButton}
+                        style={isComic ? { boxShadow: '2px 2px 0px #000' } : {}}
+                        title="Delete Selection"
+                    >
+                        <span className="material-symbols-outlined text-xl">delete</span>
+                    </button>
 
                     <button
-                        type="button"
-                        data-execute-workflow="true"
-                        onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleExecute();
-                        }}
-                        disabled={isExecuting || !selectedWorkflow}
-                        className="tactile-button text-xs sm:text-sm md:text-base bg-lime-400 text-black px-3 sm:px-4 md:px-6 h-12 sm:h-14 md:h-16 rounded-lg font-bold border-2 sm:border-3 md:border-4 border-black disabled:opacity-50 disabled:cursor-not-allowed hover:bg-lime-500 active:bg-lime-600 transition-colors min-h-[48px]"
-                        style={{ boxShadow: '2px 2px 0px #000', fontFamily: "'Bangers', cursive", letterSpacing: '1px', pointerEvents: (isExecuting || !selectedWorkflow) ? 'none' : 'auto' }}
+                        onClick={handleQuickSave}
+                        className={themeStyles.successButton}
+                        style={isComic ? { boxShadow: '2px 2px 0px #000' } : {}}
                     >
-                        <span className="flex items-center gap-1 sm:gap-2">
-                            {isExecuting ? (
-                                <><span className="hidden sm:inline">⚡ RUNNING...</span><span className="sm:hidden">⚡</span></>
-                            ) : (
-                                <><span className="hidden sm:inline">▶️ EXECUTE!</span><span className="sm:hidden">▶️</span></>
-                            )}
-                        </span>
+                        <span className="material-symbols-outlined text-lg">save</span>
+                        <span className="hidden sm:inline">Save</span>
                     </button>
+
+                    <button
+                        onClick={handleExecute}
+                        disabled={isExecuting || !selectedWorkflow}
+                        className={themeStyles.primaryButton}
+                        style={isComic ? { boxShadow: '2px 2px 0px #000', fontFamily: "'Bangers', cursive", letterSpacing: '1px' } : {}}
+                    >
+                        {isExecuting ? (
+                            <>
+                                <span className="animate-spin">⚡</span>
+                                <span>Running...</span>
+                            </>
+                        ) : (
+                            <>
+                                <span>▶️</span>
+                                <span>Execute</span>
+                            </>
+                        )}
+                    </button>
+
+                    {/* User Profile */}
+                    {user ? (
+                        <div className={`ml-2 w-8 h-8 rounded-full overflow-hidden border ${themeStyles.avatar}`}>
+                            <img 
+                                src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}`} 
+                                alt={user.name}
+                                className="w-full h-full object-cover"
+                            />
+                        </div>
+                    ) : (
+                        <button
+                            onClick={() => window.location.href = '/auth/google'}
+                            className="text-sm font-bold text-blue-600 hover:underline ml-2"
+                        >
+                            Sign In
+                        </button>
+                    )}
                 </div>
             </header>
 
@@ -1043,14 +712,14 @@ export default function App() {
             )}
 
             {/* Main Content */}
-            <main className="flex-1 flex overflow-hidden">
+            <main className="flex-1 flex overflow-hidden relative">
                 {/* Nodes Carousel with transition */}
-                <div className={`transition-all duration-300 ease-in-out ${isSidebarOpen ? 'w-96 opacity-100' : 'w-0 opacity-0'} overflow-hidden`}>
-                    {isSidebarOpen && <NodesCarousel />}
+                <div className={`transition-all duration-300 ease-in-out ${isSidebarOpen ? 'w-96 opacity-100' : 'w-0 opacity-0'} overflow-hidden h-full min-h-0 border-r ${themeStyles.divider} flex flex-col`}>
+                    <NodesCarousel />
                 </div>
 
                 {/* Canvas Area */}
-                <div className="flex-1 relative">
+                <div className={`flex-1 relative ${themeStyles.app}`}>
                     <WorkflowCanvas 
                         ref={canvasRef}
                         graph={currentGraph} 

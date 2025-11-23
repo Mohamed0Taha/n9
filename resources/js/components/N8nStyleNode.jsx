@@ -1,11 +1,123 @@
 import { Handle, Position } from 'reactflow';
 import { getNodeConfiguration } from '../data/nodeConfigurations.js';
+import { useTheme, THEMES } from '../contexts/ThemeContext.jsx';
+import { useMemo } from 'react';
 
 const N8nStyleNode = ({ data, selected, id, onOpenSettings }) => {
+  const { theme, isComic } = useTheme();
   const isBundle = data.isBundle || Array.isArray(data.bundledNodes);
   const nodeName = data.label || data.name || 'Node';
   const nodeType = data.type || nodeName; // Get the node type for configuration lookup
   
+  // Theme-based styles configuration
+  const themeStyles = useMemo(() => {
+    if (isComic) {
+        return {
+            container: `border-4 border-black ${isBundle ? 'rounded-2xl' : 'rounded-lg bg-white'}`,
+            style: { 
+                boxShadow: '4px 4px 0px #000', 
+                fontFamily: "'Comic Neue', cursive" 
+            },
+            header: `border-b-3 border-black`,
+            headerBg: (gradient) => ({}), // Use gradient class
+            iconWrapper: "bg-white border-3 border-black shadow-lg",
+            titleFont: "font-bold text-sm truncate text-white drop-shadow-lg",
+            titleStyle: { fontFamily: "'Comic Neue', cursive", textShadow: '1px 1px 2px rgba(0,0,0,0.5)' },
+            categoryText: "text-xs text-white font-semibold truncate",
+            settingsBtn: "bg-white border-3 border-black hover:bg-yellow-200",
+            body: "bg-white/90",
+            textMain: "text-slate-900",
+            textDim: "text-slate-500",
+            handle: "!bg-slate-400 !border-2 !border-white hover:!bg-blue-500",
+            triggerBtn: "tactile-button bg-gradient-to-r from-lime-400 to-emerald-400 text-black border-3 border-black",
+            triggerBtnStyle: { boxShadow: '3px 3px 0px #000', fontFamily: "'Bangers', cursive", letterSpacing: '1px' },
+            bundleGradient: 'linear-gradient(to bottom, #22c55e 0%, #22c55e 16%, #eab308 16%, #eab308 32%, #f97316 32%, #f97316 48%, #ef4444 48%, #ef4444 64%, #a855f7 64%, #a855f7 80%, #3b82f6 80%, #3b82f6 100%)'
+        };
+    }
+
+    switch(theme) {
+        case THEMES.HACKER: return {
+            container: `border border-green-500 ${isBundle ? 'rounded-lg' : 'rounded-sm bg-black'}`,
+            style: { 
+                boxShadow: '0 0 15px rgba(0, 255, 0, 0.1)', 
+                fontFamily: 'monospace' 
+            },
+            header: "border-b border-green-900 bg-black",
+            headerBg: (gradient) => ({ background: '#000' }), // Override gradient
+            iconWrapper: "bg-black border border-green-500 text-green-500",
+            titleFont: "font-bold text-sm truncate text-green-500",
+            titleStyle: { fontFamily: 'monospace' },
+            categoryText: "text-xs text-green-700 font-mono",
+            settingsBtn: "bg-black border border-green-700 text-green-500 hover:bg-green-900/30",
+            body: "bg-black",
+            textMain: "text-green-400",
+            textDim: "text-green-700",
+            handle: "!bg-black !border !border-green-500 hover:!bg-green-500",
+            triggerBtn: "bg-green-900/30 text-green-500 border border-green-500 hover:bg-green-900/50",
+            triggerBtnStyle: { fontFamily: 'monospace' },
+            bundleGradient: 'linear-gradient(to bottom, #052e16 0%, #14532d 100%)'
+        };
+        case THEMES.TERMINAL: return {
+            container: `border border-amber-600 ${isBundle ? 'rounded-lg' : 'rounded-sm bg-slate-950'}`,
+            style: { 
+                boxShadow: '0 0 10px rgba(245, 158, 11, 0.1)', 
+                fontFamily: 'monospace' 
+            },
+            header: "border-b border-amber-900 bg-slate-950",
+            headerBg: (gradient) => ({ background: '#020617' }),
+            iconWrapper: "bg-slate-950 border border-amber-600 text-amber-500",
+            titleFont: "font-bold text-sm truncate text-amber-500",
+            titleStyle: { fontFamily: 'monospace' },
+            categoryText: "text-xs text-amber-700 font-mono",
+            settingsBtn: "bg-slate-950 border border-amber-700 text-amber-500 hover:bg-amber-900/30",
+            body: "bg-slate-950",
+            textMain: "text-amber-500",
+            textDim: "text-amber-800",
+            handle: "!bg-slate-950 !border !border-amber-600 hover:!bg-amber-600",
+            triggerBtn: "bg-amber-900/30 text-amber-500 border border-amber-600 hover:bg-amber-900/50",
+            triggerBtnStyle: { fontFamily: 'monospace' },
+            bundleGradient: 'linear-gradient(to bottom, #451a03 0%, #78350f 100%)'
+        };
+        case THEMES.DARK: return {
+            container: `border border-gray-600 ${isBundle ? 'rounded-xl' : 'rounded-lg bg-gray-800'}`,
+            style: { boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.5)' },
+            header: "border-b border-gray-700 bg-gray-900",
+            headerBg: (gradient) => ({}), // Use gradient but maybe dimmed?
+            iconWrapper: "bg-gray-800 border border-gray-600 text-gray-200 shadow-md",
+            titleFont: "font-semibold text-sm truncate text-gray-100",
+            titleStyle: {},
+            categoryText: "text-xs text-gray-400 font-medium",
+            settingsBtn: "bg-gray-800 border border-gray-600 text-gray-400 hover:bg-gray-700 hover:text-white",
+            body: "bg-gray-800",
+            textMain: "text-gray-200",
+            textDim: "text-gray-500",
+            handle: "!bg-gray-600 !border-2 !border-gray-800 hover:!bg-blue-500",
+            triggerBtn: "bg-blue-600 text-white border border-blue-700 hover:bg-blue-700 rounded",
+            triggerBtnStyle: {},
+            bundleGradient: 'linear-gradient(to bottom, #1e3a8a 0%, #172554 100%)'
+        };
+        default: // PROFESSIONAL
+            return {
+                container: `border border-slate-200 ${isBundle ? 'rounded-xl' : 'rounded-lg bg-white'} shadow-sm`,
+                style: { boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)' },
+                header: "border-b border-slate-100",
+                headerBg: (gradient) => ({}),
+                iconWrapper: "bg-white border border-slate-200 text-slate-700 shadow-sm",
+                titleFont: "font-semibold text-sm truncate text-slate-700",
+                titleStyle: {},
+                categoryText: "text-xs text-slate-500 font-medium",
+                settingsBtn: "bg-white border border-slate-200 text-slate-400 hover:bg-slate-50 hover:text-slate-600",
+                body: "bg-white",
+                textMain: "text-slate-700",
+                textDim: "text-slate-400",
+                handle: "!bg-slate-400 !border-2 !border-white hover:!bg-blue-500",
+                triggerBtn: "bg-blue-600 text-white border border-blue-700 hover:bg-blue-700 rounded shadow-sm",
+                triggerBtnStyle: {},
+                bundleGradient: 'linear-gradient(to bottom, #3b82f6 0%, #2563eb 100%)'
+            };
+    }
+  }, [theme, isComic, isBundle]);
+
   // Node-specific styling based on type (like n8n)
   const getNodeStyle = (type) => {
     const styles = {
@@ -76,30 +188,27 @@ const N8nStyleNode = ({ data, selected, id, onOpenSettings }) => {
                 position: 'relative',
                 width: '14px',
                 height: '14px',
-                border: '3px solid #000',
-                backgroundColor: '#bef264',
-                borderRadius: '50%',
                 left: '50%',
                 transform: 'translateX(-50%)',
                 cursor: 'crosshair',
-                boxShadow: '2px 2px 0px #000',
-                transition: 'all 0.2s',
                 marginBottom: '0px',
                 zIndex: 1001,
+                ...(isComic ? { border: '3px solid #000', backgroundColor: '#bef264', boxShadow: '2px 2px 0px #000' } : {}),
+                ...(!isComic ? { borderRadius: '50%' } : { borderRadius: '50%' })
               }}
-              className="hover:!w-[20px] hover:!h-[20px] hover:!shadow-[3px_3px_0px_#000]"
+              className={themeStyles.handle}
             />
             {/* Label (below circle, touching) */}
             <div 
               style={{ 
-                borderRadius: '4px',
-                border: '3px solid #000',
-                boxShadow: '2px 2px 0px #000',
+                borderRadius: isComic ? '4px' : '2px',
+                border: isComic ? '3px solid #000' : theme === THEMES.HACKER || theme === THEMES.TERMINAL ? '1px solid currentColor' : '1px solid #e2e8f0',
+                boxShadow: isComic ? '2px 2px 0px #000' : 'none',
                 padding: '4px 8px',
                 fontSize: '10px',
                 fontWeight: 'bold',
-                backgroundColor: '#bef264',
-                color: '#000',
+                backgroundColor: isComic ? '#bef264' : theme === THEMES.HACKER ? '#000' : theme === THEMES.TERMINAL ? '#020617' : '#fff',
+                color: isComic ? '#000' : theme === THEMES.HACKER ? '#4ade80' : theme === THEMES.TERMINAL ? '#f59e0b' : '#1e293b',
                 whiteSpace: 'nowrap',
                 pointerEvents: 'none',
                 marginTop: '-3px',
@@ -123,14 +232,14 @@ const N8nStyleNode = ({ data, selected, id, onOpenSettings }) => {
             {/* Label (above circle, touching) */}
             <div 
               style={{ 
-                borderRadius: '4px',
-                border: '3px solid #000',
-                boxShadow: '2px 2px 0px #000',
+                borderRadius: isComic ? '4px' : '2px',
+                border: isComic ? '3px solid #000' : theme === THEMES.HACKER || theme === THEMES.TERMINAL ? '1px solid currentColor' : '1px solid #e2e8f0',
+                boxShadow: isComic ? '2px 2px 0px #000' : 'none',
                 padding: '4px 8px',
                 fontSize: '10px',
                 fontWeight: 'bold',
-                backgroundColor: '#67e8f9',
-                color: '#000',
+                backgroundColor: isComic ? '#67e8f9' : theme === THEMES.HACKER ? '#000' : theme === THEMES.TERMINAL ? '#020617' : '#fff',
+                color: isComic ? '#000' : theme === THEMES.HACKER ? '#4ade80' : theme === THEMES.TERMINAL ? '#f59e0b' : '#1e293b',
                 whiteSpace: 'nowrap',
                 marginBottom: '-3px',
                 pointerEvents: 'none',
@@ -147,17 +256,14 @@ const N8nStyleNode = ({ data, selected, id, onOpenSettings }) => {
                 position: 'relative',
                 width: '14px',
                 height: '14px',
-                border: '3px solid #000',
-                backgroundColor: '#67e8f9',
-                borderRadius: '50%',
                 left: '50%',
                 transform: 'translateX(-50%)',
                 cursor: 'crosshair',
-                boxShadow: '2px 2px 0px #000',
-                transition: 'all 0.2s',
                 zIndex: 1001,
+                ...(isComic ? { border: '3px solid #000', backgroundColor: '#67e8f9', boxShadow: '2px 2px 0px #000' } : {}),
+                ...(!isComic ? { borderRadius: '50%' } : { borderRadius: '50%' })
               }}
-              className="hover:!w-[20px] hover:!h-[20px] hover:!shadow-[3px_3px_0px_#000]"
+              className={themeStyles.handle}
             />
           </div>
         );
@@ -171,15 +277,15 @@ const N8nStyleNode = ({ data, selected, id, onOpenSettings }) => {
     <>
       {renderHandles()}
       <div
-        className={`relative ${isBundle ? 'cursor-pointer' : 'cursor-move'} border-4 ${
+        className={`relative ${isBundle ? 'cursor-pointer' : 'cursor-move'} ${themeStyles.container} ${
           isExecuting
             ? 'border-blue-500 animate-pulse'
             : selected
-            ? 'border-lime-400'
+            ? isComic ? 'border-lime-400' : 'border-blue-500 ring-2 ring-blue-200'
             : hasError
             ? 'border-red-500'
-            : 'border-black'
-        } ${isBundle ? 'rounded-2xl' : 'rounded-lg bg-white'}`}
+            : ''
+        }`}
         title={isBundle ? 'Double-click to unzip bundle' : undefined}
         onDoubleClick={(e) => {
           if (isBundle) {
@@ -189,19 +295,11 @@ const N8nStyleNode = ({ data, selected, id, onOpenSettings }) => {
         style={{
           minWidth: '200px',
           maxWidth: '240px',
-          boxShadow: isExecuting ? '0 0 20px 5px rgba(59, 130, 246, 0.8), 4px 4px 0px #000' : '4px 4px 0px #000',
-          fontFamily: "'Comic Neue', cursive",
+          ...themeStyles.style,
+          ...(isExecuting ? { boxShadow: '0 0 20px 5px rgba(59, 130, 246, 0.8)' } : {}),
           zIndex: 10,
-          borderRadius: isBundle ? '16px' : undefined,
-          backgroundColor: isBundle ? 'transparent' : undefined,
           backgroundImage: isBundle
-            ? 'linear-gradient(to bottom, ' +
-              '#22c55e 0%, #22c55e 16%, ' +
-              '#eab308 16%, #eab308 32%, ' +
-              '#f97316 32%, #f97316 48%, ' +
-              '#ef4444 48%, #ef4444 64%, ' +
-              '#a855f7 64%, #a855f7 80%, ' +
-              '#3b82f6 80%, #3b82f6 100%)'
+            ? themeStyles.bundleGradient
             : undefined,
           overflow: isBundle ? 'hidden' : undefined,
           pointerEvents: 'auto',
@@ -209,7 +307,7 @@ const N8nStyleNode = ({ data, selected, id, onOpenSettings }) => {
       >
         {/* Header with icon and name */}
         <div 
-          className={`flex items-center gap-3 px-4 py-3 border-b-3 border-black ${!isBundle ? `bg-gradient-to-r ${nodeBgGradient}` : ''}`}
+          className={`flex items-center gap-3 px-4 py-3 ${themeStyles.header} ${!isBundle ? (isComic ? `bg-gradient-to-r ${nodeBgGradient}` : '') : ''}`}
           style={
             isBundle
               ? {
@@ -217,17 +315,13 @@ const N8nStyleNode = ({ data, selected, id, onOpenSettings }) => {
                   borderTopLeftRadius: '14px',
                   borderTopRightRadius: '14px',
                 }
-              : {}
+              : themeStyles.headerBg(nodeBgGradient)
           }
         >
           <div
             className={`flex items-center justify-center ${
               isBundle ? 'w-12 h-12' : 'w-14 h-14'
-            } rounded-xl text-3xl flex-shrink-0 border-3 border-black shadow-lg relative`}
-            style={{
-              backgroundColor: 'white',
-              color: '#000',
-            }}
+            } rounded-xl text-3xl flex-shrink-0 relative ${themeStyles.iconWrapper}`}
           >
             {isBundle ? (
               <svg className="w-10 h-10" viewBox="0 0 64 64" fill="none">
@@ -251,7 +345,7 @@ const N8nStyleNode = ({ data, selected, id, onOpenSettings }) => {
               nodeIcon
             )}
             
-            {/* Spinner overlay when executing - STRONG BLUE OVERLAY */}
+            {/* Spinner overlay when executing */}
             {isExecuting && (
               <div className="absolute inset-0 flex items-center justify-center bg-blue-500/95 rounded-xl border-2 border-blue-700">
                 <svg className="animate-spin h-10 w-10 text-white drop-shadow-lg" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -261,7 +355,7 @@ const N8nStyleNode = ({ data, selected, id, onOpenSettings }) => {
               </div>
             )}
             
-            {/* Success checkmark when completed */}
+            {/* Success checkmark */}
             {hasExecuted && !isExecuting && (
               <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-1 border-2 border-black" style={{ boxShadow: '2px 2px 0px #000' }}>
                 <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -270,7 +364,7 @@ const N8nStyleNode = ({ data, selected, id, onOpenSettings }) => {
               </div>
             )}
             
-            {/* Error indicator when failed */}
+            {/* Error indicator */}
             {hasError && !isExecuting && (
               <div className="absolute -top-1 -right-1 bg-red-500 rounded-full p-1 border-2 border-black" style={{ boxShadow: '2px 2px 0px #000' }}>
                 <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -280,11 +374,11 @@ const N8nStyleNode = ({ data, selected, id, onOpenSettings }) => {
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <div className={`font-bold text-sm truncate ${isBundle ? 'text-black' : 'text-white drop-shadow-lg'}`} style={{ fontFamily: "'Comic Neue', cursive", textShadow: isBundle ? 'none' : '1px 1px 2px rgba(0,0,0,0.5)' }}>
+            <div className={themeStyles.titleFont} style={themeStyles.titleStyle}>
               {nodeName.toUpperCase()}
             </div>
             {data.category && !isBundle && (
-              <div className="text-xs text-white font-semibold truncate" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.5)' }}>
+              <div className={themeStyles.categoryText}>
                 {data.category}
               </div>
             )}
@@ -298,11 +392,11 @@ const N8nStyleNode = ({ data, selected, id, onOpenSettings }) => {
                 onOpenSettings({ id, data });
               }
             }}
-            className="p-2 bg-white border-3 border-black rounded-lg hover:bg-yellow-200 transition-colors"
-            style={{ boxShadow: '2px 2px 0px #000' }}
+            className={`p-2 rounded-lg transition-colors ${themeStyles.settingsBtn}`}
+            style={isComic ? { boxShadow: '2px 2px 0px #000' } : {}}
             title="Configure node"
           >
-            <svg className="w-4 h-4 text-black stroke-[2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 stroke-[2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
@@ -310,7 +404,7 @@ const N8nStyleNode = ({ data, selected, id, onOpenSettings }) => {
         </div>
 
         {/* Body - Parameters/Settings Preview / Bundle contents / Trigger Button */}
-        <div className="px-4 py-3 bg-white/90">
+        <div className={`px-4 py-3 ${themeStyles.body}`}>
           {nodeName === 'Manual Trigger' || nodeType === 'Manual Trigger' ? (
             <div className="flex flex-col items-center gap-2">
               <button
@@ -323,8 +417,8 @@ const N8nStyleNode = ({ data, selected, id, onOpenSettings }) => {
                     executeBtn.click();
                   }
                 }}
-                className="tactile-button w-full bg-gradient-to-r from-lime-400 to-emerald-400 text-black px-4 py-3 rounded-lg font-bold border-3 border-black hover:from-lime-500 hover:to-emerald-500 active:from-lime-600 active:to-emerald-600 transition-colors"
-                style={{ boxShadow: '3px 3px 0px #000', fontFamily: "'Bangers', cursive", letterSpacing: '1px' }}
+                className={`w-full px-4 py-3 rounded-lg font-bold transition-colors ${themeStyles.triggerBtn}`}
+                style={themeStyles.triggerBtnStyle}
               >
                 <span className="flex items-center justify-center gap-2 text-base">
                   <span className="text-xl">👆</span>
@@ -332,14 +426,14 @@ const N8nStyleNode = ({ data, selected, id, onOpenSettings }) => {
                 </span>
               </button>
               {data.parameters?.description && (
-                <div className="text-xs text-slate-600 text-center italic px-2">
+                <div className={`text-xs text-center italic px-2 ${themeStyles.textDim}`}>
                   {data.parameters.description}
                 </div>
               )}
             </div>
           ) : isBundle ? (
             <div className="space-y-2">
-              <div className="text-xs font-bold text-black mb-1">BUNDLED NODES:</div>
+              <div className={`text-xs font-bold mb-1 ${themeStyles.textMain}`}>BUNDLED NODES:</div>
               {data.bundledNodes?.slice(0, 3).map((node, idx) => (
                 <div
                   key={idx}
@@ -353,7 +447,7 @@ const N8nStyleNode = ({ data, selected, id, onOpenSettings }) => {
                 </div>
               ))}
               {data.bundledNodes && data.bundledNodes.length > 3 && (
-                <div className="text-xs font-bold text-black text-center py-1">
+                <div className={`text-xs font-bold text-center py-1 ${themeStyles.textMain}`}>
                   +{data.bundledNodes.length - 3} more...
                 </div>
               )}
@@ -376,18 +470,18 @@ const N8nStyleNode = ({ data, selected, id, onOpenSettings }) => {
             <div className="space-y-1.5">
               {Object.entries(data.parameters).slice(0, 2).map(([key, value]) => (
                 <div key={key} className="flex items-start gap-2 text-xs">
-                  <span className="text-slate-500 font-medium min-w-[60px]">{key}:</span>
-                  <span className="text-slate-900 truncate flex-1">{String(value)}</span>
+                  <span className={`font-medium min-w-[60px] ${themeStyles.textDim}`}>{key}:</span>
+                  <span className={`truncate flex-1 ${themeStyles.textMain}`}>{String(value)}</span>
                 </div>
               ))}
               {Object.keys(data.parameters).length > 2 && (
-                <div className="text-xs text-slate-400 italic">
+                <div className={`text-xs italic ${themeStyles.textDim}`}>
                   +{Object.keys(data.parameters).length - 2} more...
                 </div>
               )}
             </div>
           ) : (
-            <div className="text-xs text-slate-400 italic">Click settings to configure</div>
+            <div className={`text-xs italic ${themeStyles.textDim}`}>Click settings to configure</div>
           )}
         </div>
 
@@ -396,7 +490,7 @@ const N8nStyleNode = ({ data, selected, id, onOpenSettings }) => {
           type="target"
           position={Position.Left}
           id="left"
-          className="w-3 h-3 !bg-slate-400 !border-2 !border-white hover:!bg-blue-500 transition-colors"
+          className={`w-3 h-3 transition-colors ${themeStyles.handle}`}
           style={{ left: -7 }}
         />
 
@@ -405,10 +499,9 @@ const N8nStyleNode = ({ data, selected, id, onOpenSettings }) => {
           type="source"
           position={Position.Right}
           id="right"
-          className="w-3 h-3 !bg-slate-400 !border-2 !border-white hover:!bg-blue-500 transition-colors"
+          className={`w-3 h-3 transition-colors ${themeStyles.handle}`}
           style={{ right: -7 }}
         />
-
         
         {/* Execution count badge (like n8n) */}
         {data.executions > 0 && !isExecuting && !hasExecuted && (
