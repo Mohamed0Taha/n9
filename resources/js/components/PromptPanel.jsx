@@ -421,7 +421,10 @@ export default function PromptPanel({
                 </div>
                 
                 {/* Prompt Box */}
-                <div className={styles.panel.className} style={styles.panel.style}>
+                <div
+                    className={styles.panel.className}
+                    style={{ ...styles.panel.style, fontSize: 0 }}
+                >
                     
                     {/* Header Tab */}
                     <button
