@@ -885,7 +885,7 @@ function WorkflowCanvas(
 
   // Auto-layout function to organize nodes and prevent line mingling
   const autoLayoutNodes = useCallback(() => {
-    if (!nodes.length || !edges.length) return;
+    if (!nodes.length) return;
 
     // Build adjacency information
     const incomingEdges = {};
@@ -908,55 +908,117 @@ function WorkflowCanvas(
     // Find root nodes (nodes with no incoming edges)
     const rootNodes = nodes.filter(node => incomingEdges[node.id].length === 0);
     
-    // Organize nodes into levels using BFS
-    const levels = [];
-    const visited = new Set();
-    const nodeToLevel = {};
-    
-    const queue = rootNodes.map(node => ({ node, level: 0 }));
-    
-    while (queue.length > 0) {
-      const { node, level } = queue.shift();
+    // If no edges, arrange in a grid based on current positions
+    if (edges.length === 0) {
+      const gridSpacing = 250;
+      const nodesPerRow = Math.ceil(Math.sqrt(nodes.length));
       
-      if (visited.has(node.id)) continue;
-      visited.add(node.id);
-      
-      if (!levels[level]) levels[level] = [];
-      levels[level].push(node);
-      nodeToLevel[node.id] = level;
-      
-      // Add children to queue
-      outgoingEdges[node.id].forEach(targetId => {
-        const targetNode = nodes.find(n => n.id === targetId);
-        if (targetNode && !visited.has(targetId)) {
-          queue.push({ node: targetNode, level: level + 1 });
-        }
+      const newNodes = nodes.map((node, index) => {
+        const row = Math.floor(index / nodesPerRow);
+        const col = index % nodesPerRow;
+        
+        return {
+          ...node,
+          position: {
+            x: 100 + col * gridSpacing,
+            y: 100 + row * gridSpacing
+          }
+        };
       });
+      
+      setNodes(newNodes);
+      setTimeout(() => {
+        reactFlowInstance?.fitView({ padding: 0.2 });
+      }, 50);
+      return;
     }
     
-    // Handle disconnected nodes
-    nodes.forEach(node => {
-      if (!visited.has(node.id)) {
-        const lastLevel = levels.length;
-        if (!levels[lastLevel]) levels[lastLevel] = [];
-        levels[lastLevel].push(node);
+    // Assign nodes to layers using longest path layering
+    const nodeToLevel = {};
+    const visited = new Set();
+    
+    // Calculate the longest path to each node (topological sort with levels)
+    const calculateLevel = (nodeId, memo = {}) => {
+      if (memo[nodeId] !== undefined) return memo[nodeId];
+      if (visited.has(nodeId)) return 0; // Cycle detection
+      
+      visited.add(nodeId);
+      
+      const parents = incomingEdges[nodeId] || [];
+      if (parents.length === 0) {
+        memo[nodeId] = 0;
+        return 0;
       }
+      
+      const maxParentLevel = Math.max(...parents.map(parentId => calculateLevel(parentId, memo)));
+      memo[nodeId] = maxParentLevel + 1;
+      
+      visited.delete(nodeId);
+      return memo[nodeId];
+    };
+    
+    const levelMemo = {};
+    nodes.forEach(node => {
+      nodeToLevel[node.id] = calculateLevel(node.id, levelMemo);
     });
     
-    // Calculate positions
-    const horizontalSpacing = 300;
-    const verticalSpacing = 150;
-    const startX = 100;
+    // Group nodes by level
+    const levels = [];
+    nodes.forEach(node => {
+      const level = nodeToLevel[node.id];
+      if (!levels[level]) levels[level] = [];
+      levels[level].push(node);
+    });
+    
+    // Sort nodes within each level to minimize crossings
+    // Use barycenter heuristic: position based on average position of connected nodes
+    const sortLevel = (levelIndex) => {
+      if (!levels[levelIndex]) return;
+      
+      const nodesInLevel = levels[levelIndex];
+      
+      // Calculate barycenter for each node based on current positions
+      const barycenters = nodesInLevel.map(node => {
+        const connectedNodes = [
+          ...incomingEdges[node.id].map(id => nodes.find(n => n.id === id)),
+          ...outgoingEdges[node.id].map(id => nodes.find(n => n.id === id))
+        ].filter(Boolean);
+        
+        if (connectedNodes.length === 0) {
+          // Use current position if no connections
+          return { node, barycenter: node.position.x };
+        }
+        
+        const avgX = connectedNodes.reduce((sum, n) => sum + n.position.x, 0) / connectedNodes.length;
+        return { node, barycenter: avgX };
+      });
+      
+      // Sort by barycenter
+      barycenters.sort((a, b) => a.barycenter - b.barycenter);
+      levels[levelIndex] = barycenters.map(item => item.node);
+    };
+    
+    // Multiple passes to reduce crossings
+    for (let pass = 0; pass < 3; pass++) {
+      for (let i = 0; i < levels.length; i++) {
+        sortLevel(i);
+      }
+    }
+    
+    // Calculate positions with better spacing
+    const horizontalSpacing = 280;
+    const verticalSpacing = 180;
     const startY = 100;
     
     const newNodes = nodes.map(node => {
-      const level = nodeToLevel[node.id] ?? levels.length - 1;
+      const level = nodeToLevel[node.id];
       const nodesInLevel = levels[level];
       const indexInLevel = nodesInLevel.findIndex(n => n.id === node.id);
       
-      // Center nodes in each level
+      // Calculate X position to center the level
       const levelWidth = (nodesInLevel.length - 1) * horizontalSpacing;
-      const levelStartX = startX - (levelWidth / 2);
+      const centerX = 400; // Center of viewport
+      const levelStartX = centerX - (levelWidth / 2);
       
       return {
         ...node,

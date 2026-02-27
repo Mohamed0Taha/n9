@@ -119,6 +119,26 @@ class User extends Authenticatable
     }
 
     /**
+     * Deduct credits from user account
+     */
+    public function deductCredits(float $amount, string $description, string $action = 'deduction'): bool
+    {
+        if ($this->credit_balance < $amount) {
+            return false;
+        }
+
+        CreditTransaction::createTransaction(
+            $this,
+            'spend',
+            -$amount,
+            $description,
+            $action
+        );
+
+        return true;
+    }
+
+    /**
      * Get credit cost for an action
      */
     public function getCreditCost(string $action): float

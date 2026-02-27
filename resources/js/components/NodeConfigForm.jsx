@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useTheme, THEMES } from '../contexts/ThemeContext.jsx';
 
 /**
  * Dynamic Node Configuration Form
  * Renders form fields based on node schema
  */
 export default function NodeConfigForm({ schema, values = {}, onChange, credentials = [] }) {
+    const { theme, isComic } = useTheme();
     const [formValues, setFormValues] = useState(values);
 
     useEffect(() => {
@@ -34,6 +36,61 @@ export default function NodeConfigForm({ schema, values = {}, onChange, credenti
         return true;
     };
 
+    // Get theme-based input classes
+    const getInputClass = () => {
+        if (isComic) {
+            return "w-full px-3 py-2 border-3 border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 bg-white";
+        }
+        switch(theme) {
+            case THEMES.PROFESSIONAL:
+                return "w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-900";
+            case THEMES.HACKER:
+                return "w-full px-3 py-2 border border-green-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-black text-green-400 font-mono";
+            case THEMES.TERMINAL:
+                return "w-full px-3 py-2 border border-amber-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 bg-slate-950 text-amber-400 font-mono";
+            case THEMES.DARK:
+                return "w-full px-3 py-2 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-100";
+            default:
+                return "w-full px-3 py-2 border-3 border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 bg-white";
+        }
+    };
+
+    const getLabelClass = () => {
+        if (isComic) {
+            return "block text-sm font-bold text-black";
+        }
+        switch(theme) {
+            case THEMES.PROFESSIONAL:
+                return "block text-sm font-medium text-slate-700";
+            case THEMES.HACKER:
+                return "block text-sm font-bold text-green-500 font-mono";
+            case THEMES.TERMINAL:
+                return "block text-sm font-bold text-amber-500 font-mono";
+            case THEMES.DARK:
+                return "block text-sm font-medium text-gray-300";
+            default:
+                return "block text-sm font-bold text-black";
+        }
+    };
+
+    const getDescriptionClass = () => {
+        if (isComic) {
+            return "text-xs text-gray-600 italic";
+        }
+        switch(theme) {
+            case THEMES.PROFESSIONAL:
+                return "text-xs text-slate-500 italic";
+            case THEMES.HACKER:
+                return "text-xs text-green-600 font-mono";
+            case THEMES.TERMINAL:
+                return "text-xs text-amber-600 font-mono";
+            case THEMES.DARK:
+                return "text-xs text-gray-400 italic";
+            default:
+                return "text-xs text-gray-600 italic";
+        }
+    };
+
     const renderField = (field) => {
         const value = formValues[field.name] ?? field.default ?? '';
         const fieldId = `field-${field.name}`;
@@ -47,7 +104,7 @@ export default function NodeConfigForm({ schema, values = {}, onChange, credenti
                         value={value}
                         onChange={(e) => handleChange(field.name, e.target.value)}
                         placeholder={field.placeholder}
-                        className="w-full px-3 py-2 border-3 border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                        className={getInputClass()}
                         required={field.required}
                     />
                 );
@@ -60,7 +117,7 @@ export default function NodeConfigForm({ schema, values = {}, onChange, credenti
                         onChange={(e) => handleChange(field.name, e.target.value)}
                         placeholder={field.placeholder}
                         rows={field.rows || 4}
-                        className="w-full px-3 py-2 border-3 border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 font-mono text-sm"
+                        className={getInputClass() + " font-mono text-sm"}
                         required={field.required}
                     />
                 );
@@ -71,7 +128,7 @@ export default function NodeConfigForm({ schema, values = {}, onChange, credenti
                         id={fieldId}
                         value={value}
                         onChange={(e) => handleChange(field.name, e.target.value)}
-                        className="w-full px-3 py-2 border-3 border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                        className={getInputClass()}
                         required={field.required}
                     >
                         {field.placeholder && (
@@ -95,7 +152,7 @@ export default function NodeConfigForm({ schema, values = {}, onChange, credenti
                         min={field.min}
                         max={field.max}
                         step={field.step || 1}
-                        className="w-full px-3 py-2 border-3 border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                        className={getInputClass()}
                         required={field.required}
                     />
                 );
@@ -113,7 +170,7 @@ export default function NodeConfigForm({ schema, values = {}, onChange, credenti
                             step={field.step || 0.1}
                             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-yellow-500"
                         />
-                        <div className="text-center text-sm font-bold text-black">
+                        <div className={isComic ? "text-center text-sm font-bold text-black" : theme === THEMES.PROFESSIONAL ? "text-center text-sm font-medium text-slate-700" : theme === THEMES.HACKER ? "text-center text-sm font-bold text-green-400 font-mono" : theme === THEMES.TERMINAL ? "text-center text-sm font-bold text-amber-400 font-mono" : "text-center text-sm font-medium text-gray-300"}>
                             {value}
                         </div>
                     </div>
@@ -127,7 +184,7 @@ export default function NodeConfigForm({ schema, values = {}, onChange, credenti
                         onChange={(e) => handleChange(field.name, e.target.value)}
                         placeholder={field.placeholder}
                         rows={field.rows || 10}
-                        className="w-full px-3 py-2 border-3 border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 font-mono text-sm bg-gray-900 text-green-400"
+                        className={isComic ? "w-full px-3 py-2 border-3 border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 font-mono text-sm bg-gray-900 text-green-400" : theme === THEMES.PROFESSIONAL ? "w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm bg-slate-50 text-slate-900" : theme === THEMES.HACKER ? "w-full px-3 py-2 border border-green-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 font-mono text-sm bg-black text-green-400" : theme === THEMES.TERMINAL ? "w-full px-3 py-2 border border-amber-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono text-sm bg-slate-950 text-amber-400" : "w-full px-3 py-2 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm bg-gray-800 text-gray-100"}
                         required={field.required}
                         spellCheck={false}
                     />
@@ -167,7 +224,7 @@ export default function NodeConfigForm({ schema, values = {}, onChange, credenti
                         type="text"
                         value={value}
                         onChange={(e) => handleChange(field.name, e.target.value)}
-                        className="w-full px-3 py-2 border-3 border-black rounded-lg"
+                        className={getInputClass()}
                     />
                 );
         }
@@ -175,7 +232,7 @@ export default function NodeConfigForm({ schema, values = {}, onChange, credenti
 
     if (!schema || !schema.fields) {
         return (
-            <div className="p-4 text-center text-gray-500">
+            <div className={isComic ? "p-4 text-center text-gray-600 font-bold" : theme === THEMES.PROFESSIONAL ? "p-4 text-center text-slate-500" : theme === THEMES.HACKER ? "p-4 text-center text-green-600 font-mono" : theme === THEMES.TERMINAL ? "p-4 text-center text-amber-600 font-mono" : "p-4 text-center text-gray-400"}>
                 No configuration available for this node type.
             </div>
         );
@@ -190,14 +247,14 @@ export default function NodeConfigForm({ schema, values = {}, onChange, credenti
                     <div key={field.name} className="space-y-2">
                         <label
                             htmlFor={`field-${field.name}`}
-                            className="block text-sm font-bold text-black"
+                            className={getLabelClass()}
                         >
                             {field.label}
                             {field.required && (
                                 <span className="text-red-500 ml-1">*</span>
                             )}
                             {field.supportsVariables && (
-                                <span className="ml-2 text-xs bg-purple-200 px-2 py-1 rounded border-2 border-black">
+                                <span className={isComic ? "ml-2 text-xs bg-purple-200 px-2 py-1 rounded border-2 border-black" : theme === THEMES.PROFESSIONAL ? "ml-2 text-xs bg-purple-100 px-2 py-1 rounded border border-purple-300 text-purple-700" : theme === THEMES.HACKER ? "ml-2 text-xs bg-green-900/30 px-2 py-1 rounded border border-green-700 text-green-400 font-mono" : theme === THEMES.TERMINAL ? "ml-2 text-xs bg-amber-900/30 px-2 py-1 rounded border border-amber-700 text-amber-400 font-mono" : "ml-2 text-xs bg-purple-900/30 px-2 py-1 rounded border border-purple-700 text-purple-400"}>
                                     Supports {'{{ }}'} variables
                                 </span>
                             )}
@@ -206,7 +263,7 @@ export default function NodeConfigForm({ schema, values = {}, onChange, credenti
                         {renderField(field)}
                         
                         {field.description && (
-                            <p className="text-xs text-gray-600 italic">
+                            <p className={getDescriptionClass()}>
                                 {field.description}
                             </p>
                         )}
@@ -373,14 +430,33 @@ function ConditionsEditor({ value = [], onChange, defaultCondition }) {
  * Credential Selector
  */
 function CredentialSelector({ value, credentialType, credentials, onChange }) {
+    const { theme, isComic } = useTheme();
     const filteredCredentials = credentials.filter(c => c.type === credentialType);
+
+    const getInputClass = () => {
+        if (isComic) {
+            return "w-full px-3 py-2 border-3 border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 bg-white";
+        }
+        switch(theme) {
+            case THEMES.PROFESSIONAL:
+                return "w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-900";
+            case THEMES.HACKER:
+                return "w-full px-3 py-2 border border-green-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-black text-green-400 font-mono";
+            case THEMES.TERMINAL:
+                return "w-full px-3 py-2 border border-amber-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 bg-slate-950 text-amber-400 font-mono";
+            case THEMES.DARK:
+                return "w-full px-3 py-2 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-100";
+            default:
+                return "w-full px-3 py-2 border-3 border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 bg-white";
+        }
+    };
 
     return (
         <div className="space-y-2">
             <select
                 value={value || ''}
                 onChange={(e) => onChange(e.target.value)}
-                className="w-full px-3 py-2 border-3 border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                className={getInputClass()}
             >
                 <option value="">Select credential...</option>
                 {filteredCredentials.map((cred) => (
@@ -390,7 +466,7 @@ function CredentialSelector({ value, credentialType, credentials, onChange }) {
                 ))}
             </select>
             {filteredCredentials.length === 0 && (
-                <p className="text-xs text-orange-600 font-bold">
+                <p className={isComic ? "text-xs text-orange-600 font-bold" : theme === THEMES.PROFESSIONAL ? "text-xs text-orange-600" : theme === THEMES.HACKER ? "text-xs text-orange-500 font-mono" : theme === THEMES.TERMINAL ? "text-xs text-orange-500 font-mono" : "text-xs text-orange-400"}>
                     ⚠️ No credentials found. Create one in Settings → Credentials
                 </p>
             )}

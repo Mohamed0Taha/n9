@@ -1,9 +1,27 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useTheme, THEMES } from '../contexts/ThemeContext.jsx';
+import { n8nNodes } from '../data/n8nNodes.js';
+import { getNodeSchema } from '../data/allNodeSchemas.js';
 
-export default function PromptPanel({ onSubmit, onAcceptDraft, draft, status, isOpen, onExpand, onCollapse, isSidebarOpen, isNodeSettingsOpen, selectedNodes = [] }) {
+export default function PromptPanel({ 
+    onSubmit, 
+    onAcceptDraft, 
+    draft, 
+    status, 
+    isOpen, 
+    onExpand, 
+    onCollapse, 
+    isSidebarOpen, 
+    isNodeSettingsOpen, 
+    selectedNodes = [],
+    missingFields = [],
+    onConfigSubmit
+}) {
     const [prompt, setPrompt] = useState('');
+    const [fieldValues, setFieldValues] = useState({});
     const { theme, isComic } = useTheme();
+
+    const isCollecting = missingFields.length > 0;
 
     const styles = useMemo(() => {
         if (isComic) {
@@ -63,7 +81,12 @@ export default function PromptPanel({ onSubmit, onAcceptDraft, draft, status, is
                     className: "px-8 py-4 rounded-xl bg-gradient-to-r from-lime-400 to-green-400 text-black font-bold disabled:opacity-50 border-4 border-black text-xl",
                     style: { boxShadow: '5px 5px 0px #000', fontFamily: "'Bangers', cursive", letterSpacing: '2px' }
                 },
-                notchIconColor: "white"
+                notchIconColor: "white",
+                // New Bubble Styles
+                aiBubble: { className: "bg-white border-4 border-black p-4 rounded-2xl rounded-tl-none", style: { boxShadow: '4px 4px 0px #000' } },
+                userBubble: { className: "bg-yellow-200 border-4 border-black p-6 rounded-2xl rounded-tr-none", style: { boxShadow: '-4px 4px 0px #000' } },
+                bubbleText: { className: "text-black font-bold text-lg", style: {} },
+                formLabel: { className: "block text-lg font-bold text-black mb-2", style: { fontFamily: "'Bangers', cursive", letterSpacing: '1px' } }
             };
         }
 
@@ -124,7 +147,12 @@ export default function PromptPanel({ onSubmit, onAcceptDraft, draft, status, is
                     className: "px-8 py-4 rounded bg-green-600 text-black font-bold disabled:opacity-50 border border-green-400 text-xl hover:bg-green-500 font-mono",
                     style: {}
                 },
-                notchIconColor: "#4ade80"
+                notchIconColor: "#4ade80",
+                // Hacker Bubbles
+                aiBubble: { className: "bg-black border border-green-500 p-4 rounded-none", style: { boxShadow: '0 0 10px rgba(0,255,0,0.2)' } },
+                userBubble: { className: "bg-green-900/20 border border-green-500 p-6 rounded-none", style: {} },
+                bubbleText: { className: "text-green-500 font-mono text-sm", style: {} },
+                formLabel: { className: "block text-green-400 font-mono font-bold mb-2", style: {} }
             };
             case THEMES.TERMINAL: return {
                 containerFont: "monospace",
@@ -182,7 +210,12 @@ export default function PromptPanel({ onSubmit, onAcceptDraft, draft, status, is
                     className: "px-8 py-4 rounded bg-amber-600 text-slate-950 font-bold disabled:opacity-50 border border-amber-400 text-xl hover:bg-amber-500 font-mono",
                     style: {}
                 },
-                notchIconColor: "#f59e0b"
+                notchIconColor: "#f59e0b",
+                // Terminal Bubbles
+                aiBubble: { className: "bg-slate-950 border border-amber-500 p-4 rounded-none", style: {} },
+                userBubble: { className: "bg-amber-900/20 border border-amber-500 p-6 rounded-none", style: {} },
+                bubbleText: { className: "text-amber-500 font-mono text-sm", style: {} },
+                formLabel: { className: "block text-amber-400 font-mono font-bold mb-2", style: {} }
             };
             case THEMES.DARK: return {
                 containerFont: "sans-serif",
@@ -240,7 +273,12 @@ export default function PromptPanel({ onSubmit, onAcceptDraft, draft, status, is
                     className: "px-8 py-4 rounded-lg bg-blue-600 text-white font-bold disabled:opacity-50 hover:bg-blue-700 text-xl shadow-lg",
                     style: {}
                 },
-                notchIconColor: "#9ca3af"
+                notchIconColor: "#9ca3af",
+                // Dark Bubbles
+                aiBubble: { className: "bg-gray-800 border border-gray-700 p-4 rounded-2xl rounded-tl-none shadow-sm", style: {} },
+                userBubble: { className: "bg-blue-900/20 border border-blue-800 p-6 rounded-2xl rounded-tr-none shadow-sm", style: {} },
+                bubbleText: { className: "text-gray-200 font-medium", style: {} },
+                formLabel: { className: "block text-blue-300 font-bold mb-2", style: {} }
             };
             default: // PROFESSIONAL
                 return {
@@ -299,7 +337,12 @@ export default function PromptPanel({ onSubmit, onAcceptDraft, draft, status, is
                         className: "px-8 py-4 rounded-lg bg-blue-600 text-white font-bold disabled:opacity-50 hover:bg-blue-700 text-xl shadow-lg transition-all hover:shadow-xl",
                         style: {}
                     },
-                    notchIconColor: "#64748b"
+                    notchIconColor: "#64748b",
+                    // Professional Bubbles
+                    aiBubble: { className: "bg-white border border-slate-200 p-4 rounded-2xl rounded-tl-none shadow-sm", style: {} },
+                    userBubble: { className: "bg-blue-50 border border-blue-100 p-6 rounded-2xl rounded-tr-none shadow-sm", style: {} },
+                    bubbleText: { className: "text-slate-700 font-medium", style: {} },
+                    formLabel: { className: "block text-slate-700 font-bold mb-2", style: {} }
                 };
         }
     }, [theme, isComic]);
@@ -314,9 +357,15 @@ export default function PromptPanel({ onSubmit, onAcceptDraft, draft, status, is
 
     function handleSubmit(event) {
         event.preventDefault();
-        if (!prompt.trim()) {
-            return;
+        
+        if (isCollecting) {
+             onConfigSubmit(fieldValues);
+             setFieldValues({});
+             return;
         }
+
+        if (!prompt.trim()) return;
+        
         onSubmit(prompt);
     }
 
@@ -430,24 +479,225 @@ export default function PromptPanel({ onSubmit, onAcceptDraft, draft, status, is
                                     </div>
                                 )}
 
-                                {/* Textarea */}
-                                <div>
-                                    <label className={styles.textareaLabel.className} style={styles.textareaLabel.style}>
-                                        📝 DESCRIBE YOUR WORKFLOW:
-                                    </label>
-                                    <textarea
-                                        value={prompt}
-                                        onChange={(event) => setPrompt(event.target.value)}
-                                        placeholder="When I get an email, send a Slack message"
-                                        rows={4}
-                                        className={styles.textarea.className}
-                                        style={styles.textarea.style}
-                                        disabled={disablePrompt}
-                                    />
-                                </div>
+                                {/* Dynamic Input Form */}
+                                {isCollecting && missingFields.length > 0 ? (
+                                    <div className="space-y-6 animate-fadeIn py-2">
+                                        <div className="flex gap-4 items-start">
+                                            {/* AI Avatar */}
+                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-xl shadow-md flex-shrink-0 border-2 border-white">
+                                                🤖
+                                            </div>
+                                            
+                                            {/* AI Messages Column */}
+                                            <div className="space-y-4 w-full max-w-[85%]">
+                                                {/* Introductory Text */}
+                                                <div className={styles.aiBubble.className} style={styles.aiBubble.style}>
+                                                    <p className={styles.bubbleText.className} style={styles.bubbleText.style}>
+                                                        I've generated the structure, but I need a few configuration details to make it runnable:
+                                                    </p>
+                                                </div>
+
+                                                {/* The Form Bubble - Grouped by Node */}
+                                                <div className={styles.aiBubble.className} style={styles.aiBubble.style}>
+                                                    <div className="space-y-6">
+                                                        {(() => {
+                                                            // Group fields by nodeId
+                                                            const fieldsByNode = {};
+                                                            missingFields.forEach(field => {
+                                                                if (!field || !field.key) return;
+                                                                const nodeId = field.nodeId || 'general';
+                                                                if (!fieldsByNode[nodeId]) {
+                                                                    fieldsByNode[nodeId] = {
+                                                                        nodeName: field.label.split(':')[0].trim(),
+                                                                        nodeMetadata: field.nodeMetadata || {
+                                                                            color: '#3b82f6',
+                                                                            icon: '🔧',
+                                                                            type: 'unknown',
+                                                                            category: 'Core'
+                                                                        },
+                                                                        fields: []
+                                                                    };
+                                                                }
+                                                                fieldsByNode[nodeId].fields.push(field);
+                                                            });
+                                                            
+                                                            return Object.entries(fieldsByNode).map(([nodeId, nodeGroup], nodeIdx) => {
+                                                                const nodeColor = nodeGroup.nodeMetadata.color;
+                                                                const nodeIcon = nodeGroup.nodeMetadata.icon;
+                                                                
+                                                                return (
+                                                                <div key={nodeId} className="border-4 rounded-xl p-4" style={{
+                                                                    borderColor: nodeColor,
+                                                                    backgroundColor: `${nodeColor}10`,
+                                                                    boxShadow: `0 0 0 2px ${nodeColor}40`
+                                                                }}>
+                                                                {/* Node Header with node-specific color and icon */}
+                                                                <div className="mb-4 pb-3 border-b-3" style={{
+                                                                    borderColor: nodeColor
+                                                                }}>
+                                                                    <h3 className="text-xl font-bold flex items-center gap-3" style={{
+                                                                        color: nodeColor,
+                                                                        fontFamily: 'Bangers, cursive',
+                                                                        letterSpacing: '1px',
+                                                                        textShadow: '1px 1px 0px rgba(0,0,0,0.1)'
+                                                                    }}>
+                                                                        <div className="flex items-center justify-center w-12 h-12 rounded-xl text-2xl border-3 border-black" style={{
+                                                                            backgroundColor: nodeColor,
+                                                                            boxShadow: '2px 2px 0px #000'
+                                                                        }}>
+                                                                            {nodeIcon}
+                                                                        </div>
+                                                                        {nodeGroup.nodeName}
+                                                                    </h3>
+                                                                </div>
+                                                                
+                                                                {/* Node Fields */}
+                                                                <div className="space-y-4">
+                                                                    {nodeGroup.fields.map((field, fieldIdx) => {
+                                                                        const currentValue = fieldValues[field.key] !== undefined 
+                                                                            ? fieldValues[field.key] 
+                                                                            : (field.value !== undefined ? field.value : '');
+                                                                        
+                                                                        // Extract just the field name (after the colon)
+                                                                        const fieldLabel = field.label.includes(':') 
+                                                                            ? field.label.split(':')[1].trim() 
+                                                                            : field.label;
+                                                                        
+                                                                        return (
+                                                                            <div key={field.key} className="space-y-2">
+                                                                                <label className={styles.formLabel.className} style={styles.formLabel.style}>
+                                                                                    <span className="mr-2 inline-block">{field.icon || '⚙️'}</span>
+                                                                                    {fieldLabel}
+                                                                                    {field.required && <span className="text-red-500 ml-1">*</span>}
+                                                                                </label>
+                                                                {field.description && (
+                                                                    <p className="text-xs opacity-70 -mt-1 mb-2">{field.description}</p>
+                                                                )}
+                                                                        
+                                                                {/* Adaptive Field Rendering */}
+                                                                {field.fieldType === 'select' && field.options ? (
+                                                                    <select
+                                                                        value={currentValue}
+                                                                        onChange={(e) => setFieldValues({...fieldValues, [field.key]: e.target.value})}
+                                                                        className={`${styles.textarea.className} w-full transition-all focus:scale-[1.01]`}
+                                                                        style={{...styles.textarea.style, height: 'auto', padding: '0.75rem', width: '100%', fontSize: '0.95rem'}}
+                                                                        autoFocus={nodeIdx === 0 && fieldIdx === 0}
+                                                                    >
+                                                                        {!currentValue && <option value="">Select...</option>}
+                                                                        {field.options.map(opt => (
+                                                                            <option key={opt.value} value={opt.value}>
+                                                                                {opt.label}
+                                                                            </option>
+                                                                        ))}
+                                                                    </select>
+                                                                ) : field.fieldType === 'textarea' ? (
+                                                                    <textarea
+                                                                        placeholder={field.placeholder}
+                                                                        value={currentValue}
+                                                                        onChange={(e) => setFieldValues({...fieldValues, [field.key]: e.target.value})}
+                                                                        rows={field.rows || 4}
+                                                                        className={`${styles.textarea.className} w-full transition-all focus:scale-[1.01]`}
+                                                                        style={{...styles.textarea.style, width: '100%', fontSize: '0.95rem'}}
+                                                                        autoFocus={nodeIdx === 0 && fieldIdx === 0}
+                                                                    />
+                                                                ) : field.fieldType === 'number' || field.fieldType === 'slider' ? (
+                                                                    <div className="space-y-2">
+                                                                        <input
+                                                                            type="number"
+                                                                                placeholder={field.placeholder}
+                                                                                value={currentValue}
+                                                                                onChange={(e) => setFieldValues({...fieldValues, [field.key]: e.target.value})}
+                                                                                min={field.min}
+                                                                                max={field.max}
+                                                                                step={field.step || 1}
+                                                                                className={`${styles.textarea.className} w-full transition-all focus:scale-[1.01]`}
+                                                                                style={{...styles.textarea.style, height: 'auto', padding: '0.75rem', width: '100%', fontSize: '0.95rem'}}
+                                                                                autoFocus={nodeIdx === 0 && fieldIdx === 0}
+                                                                            />
+                                                                            {field.fieldType === 'slider' && (
+                                                                                <input
+                                                                                    type="range"
+                                                                                    value={currentValue}
+                                                                                    onChange={(e) => setFieldValues({...fieldValues, [field.key]: e.target.value})}
+                                                                                    min={field.min}
+                                                                                    max={field.max}
+                                                                                    step={field.step || 0.1}
+                                                                                    className="w-full"
+                                                                                />
+                                                                            )}
+                                                                        </div>
+                                                                    ) : field.fieldType === 'boolean' ? (
+                                                                        <label className="flex items-center gap-3 cursor-pointer">
+                                                                            <input
+                                                                                type="checkbox"
+                                                                                checked={currentValue === true || currentValue === 'true'}
+                                                                                onChange={(e) => setFieldValues({...fieldValues, [field.key]: e.target.checked})}
+                                                                                className="w-5 h-5 rounded"
+                                                                                autoFocus={nodeIdx === 0 && fieldIdx === 0}
+                                                                            />
+                                                                            <span className="text-sm">Enable {field.label}</span>
+                                                                        </label>
+                                                                    ) : field.fieldType === 'json' ? (
+                                                                        <textarea
+                                                                            placeholder={field.placeholder || '{"key": "value"}'}
+                                                                            value={typeof currentValue === 'object' ? JSON.stringify(currentValue, null, 2) : currentValue}
+                                                                            onChange={(e) => {
+                                                                                try {
+                                                                                    const parsed = JSON.parse(e.target.value);
+                                                                                    setFieldValues({...fieldValues, [field.key]: parsed});
+                                                                                } catch {
+                                                                                    setFieldValues({...fieldValues, [field.key]: e.target.value});
+                                                                                }
+                                                                            }}
+                                                                            rows={field.rows || 6}
+                                                                            className={`${styles.textarea.className} w-full transition-all focus:scale-[1.01] font-mono`}
+                                                                            style={{...styles.textarea.style, width: '100%', fontSize: '0.85rem'}}
+                                                                            autoFocus={nodeIdx === 0 && fieldIdx === 0}
+                                                                        />
+                                                                    ) : (
+                                                                        <input
+                                                                            type={field.inputType || 'text'}
+                                                                            placeholder={field.placeholder}
+                                                                            value={currentValue}
+                                                                            onChange={(e) => setFieldValues({...fieldValues, [field.key]: e.target.value})}
+                                                                            className={`${styles.textarea.className} w-full transition-all focus:scale-[1.01]`}
+                                                                            style={{...styles.textarea.style, height: 'auto', padding: '0.75rem', width: '100%', fontSize: '0.95rem'}}
+                                                                            autoFocus={nodeIdx === 0 && fieldIdx === 0}
+                                                                        />
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                                );
+                                            })
+                                        })()}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    /* Original Textarea */
+                                    <div>
+                                        <label className={styles.textareaLabel.className} style={styles.textareaLabel.style}>
+                                            📝 DESCRIBE YOUR WORKFLOW:
+                                        </label>
+                                        <textarea
+                                            value={prompt}
+                                            onChange={(event) => setPrompt(event.target.value)}
+                                            placeholder="When I get an email, send a Slack message"
+                                            rows={4}
+                                            className={styles.textarea.className}
+                                            style={styles.textarea.style}
+                                            disabled={disablePrompt}
+                                        />
+                                    </div>
+                                )}
 
                                 {/* Status Message */}
-                                {status.message && (
+                                {status.message && !isCollecting && (
                                     <div className={styles.statusBox.className} style={styles.statusBox.style}>
                                         <p className={styles.statusBox.text}>
                                             <span className="text-2xl">
@@ -491,7 +741,10 @@ export default function PromptPanel({ onSubmit, onAcceptDraft, draft, status, is
                                             disabled={disablePrompt}
                                             style={styles.submitButton.style}
                                         >
-                                            {status.state === 'generating' ? '⚡ THINKING...' : '🚀 GENERATE WORKFLOW!'}
+                                            {isCollecting 
+                                                ? '🚀 CONTINUE WITH DETAILS' 
+                                                : (status.state === 'generating' ? '⚡ THINKING...' : '🚀 GENERATE WORKFLOW!')
+                                            }
                                         </button>
                                     </div>
                                 </div>

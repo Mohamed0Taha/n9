@@ -10,6 +10,297 @@ import InsufficientCreditsModal from './InsufficientCreditsModal.jsx';
 import CredentialsModal from './CredentialsModal.jsx';
 import { n8nNodes } from '../data/n8nNodes.js';
 import { getNodeExecutionData } from '../data/nodeExecutionData.js';
+import { getNodeSchema } from '../data/allNodeSchemas.js';
+
+function normalizeNodeType(n8nType) {
+    if (!n8nType || !n8nType.startsWith('n8n-nodes-base.')) return n8nType;
+    const suffix = n8nType.replace('n8n-nodes-base.', '').toLowerCase();
+    const match = n8nNodes.find(n => {
+        const cleanId = n.id.replace(/-/g, '').toLowerCase();
+        return cleanId === suffix;
+    });
+    return match ? match.name : n8nType;
+}
+
+function findMissingNodeConfig(graph) {
+    const configFields = [];
+    if (!graph || !graph.nodes) return configFields;
+
+    const shouldShowField = (field, nodeData) => {
+        if (!field.showWhen) return true;
+        
+        return Object.entries(field.showWhen).every(([key, value]) => {
+            const nodeValue = nodeData[key];
+            if (Array.isArray(value)) {
+                return value.includes(nodeValue);
+            }
+            return value === nodeValue;
+        });
+    };
+
+    const findPlaceholdersRecursively = (obj, nodeId, nodeLabel, prefix = '') => {
+        let found = [];
+        if (!obj || typeof obj !== 'object') return found;
+
+        Object.entries(obj).forEach(([key, value]) => {
+            const fullPath = prefix ? `${prefix}.${key}` : key;
+            
+            if (typeof value === 'string') {
+                if (value.includes('YOUR_') || value.includes('ENTER_') || value.includes('your-') || value === 'Bearer Token') {
+                    const parts = fullPath.split('.');
+                    const lastPart = parts[parts.length - 1];
+                    let label = lastPart
+                        .replace(/([A-Z])/g, ' $1')
+                        .replace(/^./, str => str.toUpperCase());
+                    
+                    // Make placeholder labels more descriptive and unique
+                    let enhancedLabel = label;
+                    let enhancedPlaceholder = `Enter value for ${label}`;
+                    
+                    // Include parent context for nested fields to make them unique
+                    const pathParts = fullPath.split('.');
+                    const contextPrefix = pathParts.length > 1 ? pathParts.slice(0, -1).join(' → ') + ' → ' : '';
+                    
+                    if (/authorization|auth/i.test(lastPart)) {
+                        enhancedLabel = contextPrefix ? `${contextPrefix}Authorization` : `Authorization`;
+                        enhancedPlaceholder = `Enter authorization value for ${nodeLabel} (e.g., Bearer token123...)`;
+                    } else if (/api[-_]?key/i.test(lastPart)) {
+                        enhancedLabel = contextPrefix ? `${contextPrefix}API Key` : `API Key`;
+                        enhancedPlaceholder = `Enter API Key for ${nodeLabel}`;
+                    } else if (/token/i.test(lastPart)) {
+                        enhancedLabel = contextPrefix ? `${contextPrefix}Token` : `Access Token`;
+                        enhancedPlaceholder = `Enter access token for ${nodeLabel}`;
+                    } else if (/secret/i.test(lastPart)) {
+                        enhancedLabel = contextPrefix ? `${contextPrefix}Secret` : `Secret Key`;
+                        enhancedPlaceholder = `Enter secret key for ${nodeLabel}`;
+                    } else if (/blog[-_]?id|site[-_]?id/i.test(lastPart)) {
+                        enhancedLabel = `Site/Blog ID`;
+                        enhancedPlaceholder = `Enter your ${nodeLabel} site or blog ID`;
+                    } else if (/user[-_]?id|account[-_]?id/i.test(lastPart)) {
+                        enhancedLabel = `User/Account ID`;
+                        enhancedPlaceholder = `Enter your ${nodeLabel} user or account ID`;
+                    } else if (/url/i.test(lastPart)) {
+                        enhancedLabel = contextPrefix ? `${contextPrefix}URL` : `URL`;
+                        enhancedPlaceholder = `Enter URL for ${nodeLabel}`;
+                    } else {
+                        enhancedLabel = contextPrefix ? `${contextPrefix}${label}` : label;
+                        enhancedPlaceholder = `Enter ${label.toLowerCase()} for ${nodeLabel}`;
+                    }
+                        
+                    found.push({
+                        key: `${nodeId}_PLACEHOLDER_${fullPath}`,
+                        label: `${nodeLabel}: ${enhancedLabel}`,
+                        icon: '⚠️',
+                        placeholder: enhancedPlaceholder,
+                        fieldType: 'text',
+                        inputType: /key|token|secret|auth|password/i.test(label) ? 'password' : 'text',
+                        nodeId: nodeId,
+                        nodeMetadata: null, // Will be set when added to configFields
+                        fieldName: fullPath,
+                        isNested: true,
+                        value: value,
+                        required: true
+                    });
+                }
+            } else {
+                found = [...found, ...findPlaceholdersRecursively(value, nodeId, nodeLabel, fullPath)];
+            }
+        });
+        return found;
+    };
+
+    graph.nodes.forEach(node => {
+        const schema = getNodeSchema(node.type);
+        if (!schema) return;
+
+        const nodeLabel = node.name || node.type;
+        
+        // Get node metadata for visual styling
+        const nodeMetadata = {
+            color: node.data?.color || '#3b82f6',
+            icon: node.data?.icon || '🔧',
+            type: node.type,
+            category: node.data?.category || 'Core'
+        };
+
+        const nodeData = { ...node.data };
+        if (node.parameters) {
+            Object.assign(nodeData, node.parameters);
+        }
+
+        // Merge defaults
+        if (schema.fields) {
+            schema.fields.forEach(f => {
+                if (nodeData[f.name] === undefined && f.default !== undefined) {
+                    nodeData[f.name] = f.default;
+                }
+            });
+        }
+
+        // Check Credentials
+        if (schema.requiresCredentials) {
+             const hasCreds = (node.credentials && Object.keys(node.credentials).length > 0) ||
+                              (nodeData.apiKey || nodeData.token || nodeData.credential || nodeData.apiToken);
+             
+             if (!hasCreds) {
+                 // Determine credential type based on schema or node type
+                 const credentialType = schema.credentialType || 'API Key';
+                 let credentialLabel = '';
+                 let credentialPlaceholder = '';
+                 
+                 // Make labels more specific based on service
+                 if (credentialType.includes('oauth') || credentialType.includes('OAuth')) {
+                     credentialLabel = `${nodeLabel} OAuth Token`;
+                     credentialPlaceholder = `Enter OAuth 2.0 Access Token for ${nodeLabel}`;
+                 } else if (credentialType.includes('api') || /openai|anthropic|hugging/i.test(nodeLabel)) {
+                     credentialLabel = `${nodeLabel} API Key`;
+                     credentialPlaceholder = `Enter API Key for ${nodeLabel} (e.g., sk-...)`;
+                 } else if (/slack|discord|telegram/i.test(nodeLabel)) {
+                     credentialLabel = `${nodeLabel} Bot Token`;
+                     credentialPlaceholder = `Enter Bot Token for ${nodeLabel}`;
+                 } else if (/github|gitlab/i.test(nodeLabel)) {
+                     credentialLabel = `${nodeLabel} Personal Access Token`;
+                     credentialPlaceholder = `Enter Personal Access Token for ${nodeLabel}`;
+                 } else if (/gmail|google/i.test(nodeLabel)) {
+                     credentialLabel = `${nodeLabel} OAuth Credentials`;
+                     credentialPlaceholder = `Enter OAuth 2.0 credentials for ${nodeLabel}`;
+                 } else if (/stripe|paypal/i.test(nodeLabel)) {
+                     credentialLabel = `${nodeLabel} Secret Key`;
+                     credentialPlaceholder = `Enter Secret Key for ${nodeLabel}`;
+                 } else {
+                     credentialLabel = `${nodeLabel} API Credentials`;
+                     credentialPlaceholder = `Enter API Key or Token for ${nodeLabel}`;
+                 }
+                 
+                 configFields.push({
+                    key: `${node.id}_credential`,
+                    label: `${nodeLabel}: ${credentialLabel}`,
+                    icon: '🔑',
+                    placeholder: credentialPlaceholder,
+                    fieldType: 'text',
+                    inputType: 'password',
+                    nodeId: node.id,
+                    nodeMetadata: nodeMetadata,
+                    value: '',
+                    required: true
+                });
+             }
+        }
+
+        // Collect ALL configurable fields (not just missing)
+        if (schema.fields && Array.isArray(schema.fields)) {
+            schema.fields.forEach(field => {
+                // Defensive: ensure field has a name
+                if (!field || !field.name) return;
+                
+                // Skip internal/automatic fields
+                if (['id', 'position', 'type'].includes(field.name)) return;
+                
+                // Check visibility
+                if (!shouldShowField(field, nodeData)) return;
+
+                const value = nodeData[field.name];
+                const hasValue = value !== undefined && value !== null && value !== '';
+                
+                // Determine if field is critical (missing + required)
+                const isCritical = field.required && !hasValue && 
+                                   (field.default === undefined || field.default === null || field.default === '');
+
+                // Defensive: handle missing field metadata
+                const fieldLabel = field.label || field.name || 'Configuration';
+                const fieldType = field.type || 'text';
+                
+                // Create more descriptive placeholders based on field name and node type
+                let enhancedPlaceholder = field.placeholder;
+                if (!enhancedPlaceholder) {
+                    if (field.name === 'url') {
+                        enhancedPlaceholder = `Enter ${nodeLabel} URL (e.g., https://api.example.com/endpoint)`;
+                    } else if (field.name === 'email' || field.name === 'to') {
+                        enhancedPlaceholder = `Enter email address (e.g., user@example.com)`;
+                    } else if (field.name === 'channel' && /slack/i.test(nodeLabel)) {
+                        enhancedPlaceholder = `Enter Slack channel name (e.g., #general)`;
+                    } else if (field.name === 'text' || field.name === 'message') {
+                        enhancedPlaceholder = `Enter message content for ${nodeLabel}`;
+                    } else if (field.name === 'query') {
+                        enhancedPlaceholder = `Enter search query for ${nodeLabel}`;
+                    } else if (field.name === 'prompt' && /openai|anthropic/i.test(nodeLabel)) {
+                        enhancedPlaceholder = `Enter AI prompt (e.g., "Summarize this text...")`;
+                    } else if (field.name === 'model') {
+                        enhancedPlaceholder = `Select AI model for ${nodeLabel}`;
+                    } else if (field.name === 'spreadsheetId' || field.name === 'sheetId') {
+                        enhancedPlaceholder = `Enter Google Sheets ID from URL`;
+                    } else if (field.name === 'repository' || field.name === 'repo') {
+                        enhancedPlaceholder = `Enter repository name (e.g., owner/repo)`;
+                    } else if (field.name === 'database' || field.name === 'collection') {
+                        enhancedPlaceholder = `Enter ${nodeLabel} database/collection name`;
+                    } else {
+                        enhancedPlaceholder = `Enter ${fieldLabel} for ${nodeLabel}`;
+                    }
+                }
+                
+                configFields.push({
+                    key: `${node.id}_${field.name}`,
+                    label: `${nodeLabel}: ${fieldLabel}`,
+                    icon: isCritical ? '⚠️' : '⚙️',
+                    placeholder: enhancedPlaceholder,
+                    description: field.description || null,
+                    fieldType: fieldType,
+                    inputType: fieldType === 'password' || /key|token|secret/i.test(field.name) ? 'password' : 'text',
+                    nodeId: node.id,
+                    nodeMetadata: nodeMetadata,
+                    fieldName: field.name,
+                    value: hasValue ? value : (field.default !== undefined ? field.default : ''),
+                    required: field.required || false,
+                    options: Array.isArray(field.options) ? field.options : null,
+                    min: field.min !== undefined ? field.min : null,
+                    max: field.max !== undefined ? field.max : null,
+                    step: field.step !== undefined ? field.step : null,
+                    rows: field.rows !== undefined ? field.rows : null
+                });
+            });
+        }
+
+        // Deep Search for Placeholders
+        const placeholders = findPlaceholdersRecursively(nodeData, node.id, nodeLabel);
+        placeholders.forEach(p => {
+            // Check if this placeholder duplicates an existing schema field
+            const isDuplicate = configFields.some(existing => {
+                // Same node and same key
+                if (existing.key === p.key) return true;
+                
+                // Check if the field path matches a schema field
+                // e.g., "headers.authorization" placeholder vs "headers" schema field
+                if (existing.nodeId === p.nodeId) {
+                    // If placeholder is nested (e.g., headers.authorization) and we have a schema field for the parent (headers)
+                    if (p.isNested && p.fieldName.includes('.')) {
+                        const parentField = p.fieldName.split('.')[0];
+                        if (existing.fieldName === parentField) return true;
+                    }
+                    
+                    // If both refer to the same field (url, authorization, etc.)
+                    if (existing.fieldName === p.fieldName) return true;
+                    
+                    // Check if placeholder field name is contained in schema field name or vice versa
+                    const pFieldLower = p.fieldName.toLowerCase().replace(/[._-]/g, '');
+                    const existingFieldLower = existing.fieldName.toLowerCase().replace(/[._-]/g, '');
+                    
+                    // Skip if they're semantically the same (e.g., "url" vs "url", "authorization" vs "headers.authorization")
+                    if (pFieldLower === existingFieldLower) return true;
+                }
+                
+                return false;
+            });
+            
+            if (!isDuplicate) {
+                // Set nodeMetadata for placeholder fields
+                p.nodeMetadata = nodeMetadata;
+                configFields.push(p);
+            }
+        });
+    });
+    
+    return configFields;
+}
 
 function enrichGraphWithNodeMetadata(graph) {
     if (!graph || !Array.isArray(graph.nodes)) {
@@ -21,16 +312,18 @@ function enrichGraphWithNodeMetadata(graph) {
     return {
         ...graph,
         nodes: graph.nodes.map((node) => {
-            const typeName = node.type;
+            const typeName = normalizeNodeType(node.type);
             const meta = nodeByType.get(typeName);
             if (!meta) {
                 return node;
             }
 
-            const existingData = node.data ?? {};
+            // Merge parameters into data if present (AI generation often uses parameters)
+            const existingData = { ...(node.data || {}), ...(node.parameters || {}) };
 
             return {
                 ...node,
+                type: typeName, // Normalize type
                 data: {
                     ...existingData,
                     icon: existingData.icon ?? meta.icon,
@@ -136,6 +429,7 @@ export default function App() {
     const [creditInfo, setCreditInfo] = useState({ required: 0, current: 0, action: '' });
     const [credentials, setCredentials] = useState([]);
     const [showCredentialsModal, setShowCredentialsModal] = useState(false);
+    const [missingNodeFields, setMissingNodeFields] = useState([]);
     const canvasRef = useRef(null);
     const editMenuRef = useRef(null);
     const pollingIntervalRef = useRef(null);
@@ -244,16 +538,79 @@ export default function App() {
             const response = await axios.post('/app/ai/generate', { prompt });
             const generatedGraph = enrichGraphWithNodeMetadata(response.data.graph);
             
-            setGenerateStatus({ state: 'success', message: 'Workflow generated!' });
-            setDraft({ ...draft, description: prompt, graph: generatedGraph });
-            setCurrentGraph(generatedGraph);
+            // Post-Generation Analysis
+            const missing = findMissingNodeConfig(generatedGraph);
             
-            // Add to history
-            handleGraphChange(generatedGraph);
+            if (missing.length > 0) {
+                setGenerateStatus({ state: 'success', message: 'Workflow generated! Please configure.' });
+                setDraft({ ...draft, description: prompt, graph: generatedGraph });
+                setCurrentGraph(generatedGraph);
+                handleGraphChange(generatedGraph);
+                
+                // Open panel and trigger collection
+                setIsPromptOpen(true);
+                setMissingNodeFields(missing);
+            } else {
+                setGenerateStatus({ state: 'success', message: 'Workflow generated!' });
+                setDraft({ ...draft, description: prompt, graph: generatedGraph });
+                setCurrentGraph(generatedGraph);
+                handleGraphChange(generatedGraph);
+                setMissingNodeFields([]);
+            }
         } catch (error) {
             setGenerateStatus({ state: 'error', message: 'Failed to generate workflow' });
             console.error(error);
         }
+    };
+
+    const handleConfigSubmit = (values) => {
+        const newGraph = { ...currentGraph };
+        // Deep clone nodes to avoid mutation issues
+        const newNodes = newGraph.nodes.map(n => ({ ...n, data: { ...n.data }, parameters: { ...(n.parameters || {}) } }));
+        let modified = false;
+
+        const setNested = (obj, path, val) => {
+            if (!obj) return;
+            const keys = path.split('.');
+            let current = obj;
+            for (let i = 0; i < keys.length - 1; i++) {
+                if (!current[keys[i]]) current[keys[i]] = {};
+                current = current[keys[i]];
+            }
+            current[keys[keys.length - 1]] = val;
+        };
+
+        missingNodeFields.forEach(field => {
+            const val = values[field.key];
+            // Accept all values including empty strings, false, 0, etc.
+            if (val !== undefined && val !== null) {
+                const node = newNodes.find(n => n.id === field.nodeId);
+                if (node) {
+                    if (field.fieldName) {
+                        if (field.isNested) {
+                            setNested(node.data, field.fieldName, val);
+                            if (node.parameters) setNested(node.parameters, field.fieldName, val);
+                        } else {
+                            node.data[field.fieldName] = val;
+                            if (node.parameters) node.parameters[field.fieldName] = val;
+                        }
+                    } else {
+                        // Credential (fallback)
+                        node.data.apiKey = val;
+                    }
+                    modified = true;
+                }
+            }
+        });
+
+        if (modified) {
+            const updatedGraph = { ...newGraph, nodes: newNodes };
+            setCurrentGraph(updatedGraph);
+            handleGraphChange(updatedGraph);
+            setDraft({ ...draft, graph: updatedGraph });
+        }
+        
+        setMissingNodeFields([]);
     };
 
     const handleAcceptDraft = async () => {
@@ -754,6 +1111,8 @@ export default function App() {
                 isSidebarOpen={isSidebarOpen}
                 isNodeSettingsOpen={isNodeSettingsOpen}
                 selectedNodes={selectedNodes}
+                missingFields={missingNodeFields}
+                onConfigSubmit={handleConfigSubmit}
             />
 
             {/* Google Login Modal */}

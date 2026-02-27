@@ -1,9 +1,11 @@
-import { Fragment, useState, useEffect } from 'react';
+import { Fragment, useState, useEffect, useMemo } from 'react';
 import { getNodeSchema } from '../data/allNodeSchemas.js';
 import NodeDataPanel from './NodeDataPanel_v2.jsx';
 import NodeConfigForm from './NodeConfigForm.jsx';
+import { useTheme, THEMES } from '../contexts/ThemeContext.jsx';
 
 export default function NodeSettingsPanel({ node, onClose, onUpdate, executionData, graph, credentials = [] }) {
+    const { theme, isComic } = useTheme();
     const [formData, setFormData] = useState({});
     const [activeTab, setActiveTab] = useState('settings'); // 'settings', 'input', 'output'
 
@@ -13,9 +15,155 @@ export default function NodeSettingsPanel({ node, onClose, onUpdate, executionDa
 
     const { data = {} } = node;
     const nodeName = data.label || data.name || 'Node';
-    const nodeType = node.type || nodeName;
+    // Use data.type (business logic type) if available, otherwise fall back to name or ReactFlow type
+    const nodeType = data.type || nodeName || node.type;
     const nodeCategory = data.category || '';
     const schema = getNodeSchema(nodeType);
+
+    // Theme-based styles
+    const styles = useMemo(() => {
+        if (isComic) {
+            return {
+                container: "fixed inset-0 z-50 flex bg-yellow-100",
+                containerStyle: { fontFamily: "'Comic Neue', cursive" },
+                leftPanel: "w-64 border-r-4 border-black bg-yellow-50 flex-shrink-0 overflow-hidden",
+                leftPanelStyle: { boxShadow: '4px 0px 0px #000' },
+                middlePanel: "flex flex-col flex-1 bg-yellow-50 border-r-4 border-black overflow-hidden",
+                middlePanelStyle: { boxShadow: '4px 0px 0px #000' },
+                header: "flex-shrink-0 border-b-4 border-black bg-gradient-to-r from-yellow-400 via-orange-400 to-red-500",
+                headerStyle: { boxShadow: '0px 4px 0px #000' },
+                title: "text-xl font-bold text-black",
+                titleStyle: { fontFamily: "'Bangers', cursive", letterSpacing: '1px' },
+                tabsContainer: "flex border-t-4 border-black bg-pink-200",
+                tabActive: "flex-1 px-4 py-3 text-sm font-bold transition-all border-r-2 border-black bg-lime-400 text-black",
+                tabActiveStyle: { boxShadow: 'inset 0px 3px 0px rgba(0,0,0,0.2)' },
+                tabInactive: "flex-1 px-4 py-3 text-sm font-bold transition-all border-r-2 border-black text-black hover:bg-yellow-200",
+                content: "flex-1 overflow-y-auto px-5 py-4",
+                footer: "flex-shrink-0 px-5 py-4 border-t-4 border-black bg-gradient-to-r from-yellow-400 to-orange-400 flex items-center justify-end gap-3",
+                footerStyle: { boxShadow: '0px -4px 0px #000' },
+                rightPanel: "w-64 bg-white flex-shrink-0 overflow-hidden",
+                closeButton: "p-2 rounded-lg bg-red-400 border-3 border-black",
+                closeButtonStyle: { boxShadow: '2px 2px 0px #000' }
+            };
+        }
+
+        switch(theme) {
+            case THEMES.PROFESSIONAL: return {
+                container: "fixed inset-0 z-50 flex bg-slate-100",
+                containerStyle: {},
+                leftPanel: "w-64 border-r border-slate-200 bg-white flex-shrink-0 overflow-hidden",
+                leftPanelStyle: {},
+                middlePanel: "flex flex-col flex-1 bg-white border-r border-slate-200 overflow-hidden",
+                middlePanelStyle: {},
+                header: "flex-shrink-0 border-b border-slate-200 bg-white",
+                headerStyle: {},
+                title: "text-xl font-semibold text-slate-900",
+                titleStyle: {},
+                tabsContainer: "flex border-t border-slate-200 bg-slate-50",
+                tabActive: "flex-1 px-4 py-3 text-sm font-medium transition-all border-r border-slate-200 bg-white text-blue-600 border-b-2 border-b-blue-600",
+                tabActiveStyle: {},
+                tabInactive: "flex-1 px-4 py-3 text-sm font-medium transition-all border-r border-slate-200 text-slate-600 hover:bg-slate-100",
+                content: "flex-1 overflow-y-auto px-5 py-4 bg-slate-50",
+                footer: "flex-shrink-0 px-5 py-4 border-t border-slate-200 bg-white flex items-center justify-end gap-3",
+                footerStyle: {},
+                rightPanel: "w-64 bg-white flex-shrink-0 overflow-hidden border-l border-slate-200",
+                closeButton: "p-2 rounded-lg hover:bg-slate-100 text-slate-600",
+                closeButtonStyle: {}
+            };
+
+            case THEMES.HACKER: return {
+                container: "fixed inset-0 z-50 flex bg-black",
+                containerStyle: { fontFamily: "monospace" },
+                leftPanel: "w-64 border-r border-green-900 bg-black flex-shrink-0 overflow-hidden",
+                leftPanelStyle: {},
+                middlePanel: "flex flex-col flex-1 bg-black border-r border-green-900 overflow-hidden",
+                middlePanelStyle: {},
+                header: "flex-shrink-0 border-b border-green-900 bg-black",
+                headerStyle: {},
+                title: "text-xl font-bold text-green-500",
+                titleStyle: { fontFamily: "monospace" },
+                tabsContainer: "flex border-t border-green-900 bg-green-900/10",
+                tabActive: "flex-1 px-4 py-3 text-sm font-bold transition-all border-r border-green-900 bg-green-900/30 text-green-400",
+                tabActiveStyle: {},
+                tabInactive: "flex-1 px-4 py-3 text-sm font-bold transition-all border-r border-green-900 text-green-600 hover:bg-green-900/20",
+                content: "flex-1 overflow-y-auto px-5 py-4 bg-black",
+                footer: "flex-shrink-0 px-5 py-4 border-t border-green-900 bg-black flex items-center justify-end gap-3",
+                footerStyle: {},
+                rightPanel: "w-64 bg-black flex-shrink-0 overflow-hidden border-l border-green-900",
+                closeButton: "p-2 rounded-lg hover:bg-green-900/20 text-green-500",
+                closeButtonStyle: {}
+            };
+
+            case THEMES.TERMINAL: return {
+                container: "fixed inset-0 z-50 flex bg-slate-950",
+                containerStyle: { fontFamily: "monospace" },
+                leftPanel: "w-64 border-r border-amber-900 bg-slate-950 flex-shrink-0 overflow-hidden",
+                leftPanelStyle: {},
+                middlePanel: "flex flex-col flex-1 bg-slate-950 border-r border-amber-900 overflow-hidden",
+                middlePanelStyle: {},
+                header: "flex-shrink-0 border-b border-amber-900 bg-slate-950",
+                headerStyle: {},
+                title: "text-xl font-bold text-amber-500",
+                titleStyle: { fontFamily: "monospace" },
+                tabsContainer: "flex border-t border-amber-900 bg-amber-900/10",
+                tabActive: "flex-1 px-4 py-3 text-sm font-bold transition-all border-r border-amber-900 bg-amber-900/30 text-amber-400",
+                tabActiveStyle: {},
+                tabInactive: "flex-1 px-4 py-3 text-sm font-bold transition-all border-r border-amber-900 text-amber-600 hover:bg-amber-900/20",
+                content: "flex-1 overflow-y-auto px-5 py-4 bg-slate-950",
+                footer: "flex-shrink-0 px-5 py-4 border-t border-amber-900 bg-slate-950 flex items-center justify-end gap-3",
+                footerStyle: {},
+                rightPanel: "w-64 bg-slate-950 flex-shrink-0 overflow-hidden border-l border-amber-900",
+                closeButton: "p-2 rounded-lg hover:bg-amber-900/20 text-amber-500",
+                closeButtonStyle: {}
+            };
+
+            case THEMES.DARK: return {
+                container: "fixed inset-0 z-50 flex bg-gray-900",
+                containerStyle: {},
+                leftPanel: "w-64 border-r border-gray-700 bg-gray-800 flex-shrink-0 overflow-hidden",
+                leftPanelStyle: {},
+                middlePanel: "flex flex-col flex-1 bg-gray-800 border-r border-gray-700 overflow-hidden",
+                middlePanelStyle: {},
+                header: "flex-shrink-0 border-b border-gray-700 bg-gray-800",
+                headerStyle: {},
+                title: "text-xl font-semibold text-gray-100",
+                titleStyle: {},
+                tabsContainer: "flex border-t border-gray-700 bg-gray-900",
+                tabActive: "flex-1 px-4 py-3 text-sm font-medium transition-all border-r border-gray-700 bg-gray-700 text-blue-400",
+                tabActiveStyle: {},
+                tabInactive: "flex-1 px-4 py-3 text-sm font-medium transition-all border-r border-gray-700 text-gray-400 hover:bg-gray-800",
+                content: "flex-1 overflow-y-auto px-5 py-4 bg-gray-900",
+                footer: "flex-shrink-0 px-5 py-4 border-t border-gray-700 bg-gray-800 flex items-center justify-end gap-3",
+                footerStyle: {},
+                rightPanel: "w-64 bg-gray-800 flex-shrink-0 overflow-hidden border-l border-gray-700",
+                closeButton: "p-2 rounded-lg hover:bg-gray-700 text-gray-300",
+                closeButtonStyle: {}
+            };
+
+            default: return {
+                container: "fixed inset-0 z-50 flex bg-yellow-100",
+                containerStyle: { fontFamily: "'Comic Neue', cursive" },
+                leftPanel: "w-64 border-r-4 border-black bg-yellow-50 flex-shrink-0 overflow-hidden",
+                leftPanelStyle: { boxShadow: '4px 0px 0px #000' },
+                middlePanel: "flex flex-col flex-1 bg-yellow-50 border-r-4 border-black overflow-hidden",
+                middlePanelStyle: { boxShadow: '4px 0px 0px #000' },
+                header: "flex-shrink-0 border-b-4 border-black bg-gradient-to-r from-yellow-400 via-orange-400 to-red-500",
+                headerStyle: { boxShadow: '0px 4px 0px #000' },
+                title: "text-xl font-bold text-black",
+                titleStyle: { fontFamily: "'Bangers', cursive", letterSpacing: '1px' },
+                tabsContainer: "flex border-t-4 border-black bg-pink-200",
+                tabActive: "flex-1 px-4 py-3 text-sm font-bold transition-all border-r-2 border-black bg-lime-400 text-black",
+                tabActiveStyle: { boxShadow: 'inset 0px 3px 0px rgba(0,0,0,0.2)' },
+                tabInactive: "flex-1 px-4 py-3 text-sm font-bold transition-all border-r-2 border-black text-black hover:bg-yellow-200",
+                content: "flex-1 overflow-y-auto px-5 py-4",
+                footer: "flex-shrink-0 px-5 py-4 border-t-4 border-black bg-gradient-to-r from-yellow-400 to-orange-400 flex items-center justify-end gap-3",
+                footerStyle: { boxShadow: '0px -4px 0px #000' },
+                rightPanel: "w-64 bg-white flex-shrink-0 overflow-hidden",
+                closeButton: "p-2 rounded-lg bg-red-400 border-3 border-black",
+                closeButtonStyle: { boxShadow: '2px 2px 0px #000' }
+            };
+        }
+    }, [theme, isComic]);
 
     // Initialize form data from node parameters
     useEffect(() => {
@@ -42,9 +190,9 @@ export default function NodeSettingsPanel({ node, onClose, onUpdate, executionDa
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex bg-yellow-100" style={{ fontFamily: "'Comic Neue', cursive" }}>
+        <div className={styles.container} style={styles.containerStyle}>
             {/* Left Panel - INPUT */}
-            <div className="w-64 border-r-4 border-black bg-yellow-50 flex-shrink-0 overflow-hidden" style={{ boxShadow: '4px 0px 0px #000' }}>
+            <div className={styles.leftPanel} style={styles.leftPanelStyle}>
                 <NodeDataPanel 
                     node={node} 
                     type="input" 
@@ -54,64 +202,56 @@ export default function NodeSettingsPanel({ node, onClose, onUpdate, executionDa
             </div>
 
             {/* Middle Panel - Settings */}
-            <div className="flex flex-col flex-1 bg-yellow-50 border-r-4 border-black overflow-hidden" style={{ boxShadow: '4px 0px 0px #000' }}>
+            <div className={styles.middlePanel} style={styles.middlePanelStyle}>
                 {/* Header */}
-                <div className="flex-shrink-0 border-b-4 border-black bg-gradient-to-r from-yellow-400 via-orange-400 to-red-500" style={{ boxShadow: '0px 4px 0px #000' }}>
+                <div className={styles.header} style={styles.headerStyle}>
                     <div className="flex items-center justify-between px-5 py-4">
                         <div className="flex items-center gap-3">
                             <div
-                                className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl border-3 border-black"
-                                style={{ backgroundColor: data.color ?? '#3b82f6', color: '#ffffff', boxShadow: '2px 2px 0px #000' }}
+                                className={isComic ? "w-12 h-12 rounded-lg flex items-center justify-center text-2xl border-3 border-black" : "w-12 h-12 rounded-lg flex items-center justify-center text-2xl"}
+                                style={{ backgroundColor: data.color ?? '#3b82f6', color: '#ffffff', ...(isComic ? { boxShadow: '2px 2px 0px #000' } : {}) }}
                             >
                                 {data.icon ?? '⚙️'}
                             </div>
                             <div>
-                                <h3 className="text-xl font-bold text-black" style={{ fontFamily: "'Bangers', cursive", letterSpacing: '1px' }}>{nodeName.toUpperCase()}</h3>
-                                <p className="text-sm text-black font-bold capitalize">{nodeType}</p>
+                                <h3 className={styles.title} style={styles.titleStyle}>{isComic ? nodeName.toUpperCase() : nodeName}</h3>
+                                <p className={isComic ? "text-sm text-black font-bold capitalize" : theme === THEMES.PROFESSIONAL ? "text-sm text-slate-600 capitalize" : theme === THEMES.HACKER ? "text-sm text-green-600 capitalize font-mono" : theme === THEMES.TERMINAL ? "text-sm text-amber-600 capitalize font-mono" : "text-sm text-gray-400 capitalize"}>{nodeType}</p>
                             </div>
                         </div>
                         <button
                             type="button"
-                            className="p-2 rounded-lg bg-red-400 border-3 border-black"
+                            className={styles.closeButton}
                             onClick={onClose}
-                            style={{ boxShadow: '2px 2px 0px #000' }}
+                            style={styles.closeButtonStyle}
                             aria-label="Close node settings"
                         >
-                            <svg className="w-6 h-6 text-black stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                            <svg className={isComic ? "w-6 h-6 text-black stroke-[3]" : "w-6 h-6 stroke-2"} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={isComic ? 3 : 2} d="M6 18L18 6M6 6l12 12" />
                             </svg>
                         </button>
                     </div>
 
                     {/* Tabs */}
-                    <div className="flex border-t-4 border-black bg-pink-200">
+                    <div className={styles.tabsContainer}>
                         <button
                             onClick={() => setActiveTab('settings')}
-                            className={`flex-1 px-4 py-3 text-sm font-bold transition-all border-r-2 border-black ${
-                                activeTab === 'settings'
-                                    ? 'bg-lime-400 text-black'
-                                    : 'text-black hover:bg-yellow-200'
-                            }`}
-                            style={activeTab === 'settings' ? { boxShadow: 'inset 0px 3px 0px rgba(0,0,0,0.2)' } : {}}
+                            className={activeTab === 'settings' ? styles.tabActive : styles.tabInactive}
+                            style={activeTab === 'settings' ? styles.tabActiveStyle : {}}
                         >
-                            ⚙️ SETTINGS
+                            {isComic ? '⚙️ SETTINGS' : '⚙️ Settings'}
                         </button>
                         <button
                             onClick={() => setActiveTab('conditions')}
-                            className={`flex-1 px-4 py-3 text-sm font-bold transition-all ${
-                                activeTab === 'conditions'
-                                    ? 'bg-lime-400 text-black'
-                                    : 'text-black hover:bg-yellow-200'
-                            }`}
-                            style={activeTab === 'conditions' ? { boxShadow: 'inset 0px 3px 0px rgba(0,0,0,0.2)' } : {}}
+                            className={activeTab === 'conditions' ? styles.tabActive : styles.tabInactive}
+                            style={activeTab === 'conditions' ? styles.tabActiveStyle : {}}
                         >
-                            📋 PARAMETERS
+                            {isComic ? '📋 PARAMETERS' : '📋 Parameters'}
                         </button>
                     </div>
                 </div>
 
                 {/* Scrollable Content */}
-                <div className="flex-1 overflow-y-auto px-5 py-4">
+                <div className={styles.content}>
                     {/* Render schema-based configuration form */}
                     {activeTab === 'settings' && (
                         <NodeConfigForm
@@ -309,28 +449,28 @@ export default function NodeSettingsPanel({ node, onClose, onUpdate, executionDa
                 </div>
 
                 {/* Footer Actions */}
-                <div className="flex-shrink-0 px-5 py-4 border-t-4 border-black bg-gradient-to-r from-yellow-400 to-orange-400 flex items-center justify-end gap-3" style={{ boxShadow: '0px -4px 0px #000' }}>
+                <div className={styles.footer} style={styles.footerStyle}>
                     <button
                         type="button"
-                        className="px-4 py-2 text-sm font-bold text-black bg-white border-3 border-black rounded-lg hover:bg-gray-100 transition tactile-button"
+                        className={isComic ? "px-4 py-2 text-sm font-bold text-black bg-white border-3 border-black rounded-lg hover:bg-gray-100 transition tactile-button" : theme === THEMES.PROFESSIONAL ? "px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition" : theme === THEMES.HACKER ? "px-4 py-2 text-sm font-bold text-green-500 bg-black border border-green-700 rounded-lg hover:bg-green-900/20 transition font-mono" : theme === THEMES.TERMINAL ? "px-4 py-2 text-sm font-bold text-amber-500 bg-slate-950 border border-amber-700 rounded-lg hover:bg-amber-900/20 transition font-mono" : "px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 border border-gray-600 rounded-lg hover:bg-gray-600 transition"}
                         onClick={onClose}
-                        style={{ boxShadow: '2px 2px 0px #000' }}
+                        style={isComic ? { boxShadow: '2px 2px 0px #000' } : {}}
                     >
                         Cancel
                     </button>
                     <button
                         type="button"
-                        className="px-5 py-2 text-sm font-bold text-white bg-green-500 border-3 border-black rounded-lg hover:bg-green-600 transition tactile-button"
+                        className={isComic ? "px-5 py-2 text-sm font-bold text-white bg-green-500 border-3 border-black rounded-lg hover:bg-green-600 transition tactile-button" : theme === THEMES.PROFESSIONAL ? "px-5 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition" : theme === THEMES.HACKER ? "px-5 py-2 text-sm font-bold text-black bg-green-500 border border-green-700 rounded-lg hover:bg-green-600 transition font-mono" : theme === THEMES.TERMINAL ? "px-5 py-2 text-sm font-bold text-black bg-amber-500 border border-amber-700 rounded-lg hover:bg-amber-600 transition font-mono" : "px-5 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition"}
                         onClick={handleSave}
-                        style={{ boxShadow: '3px 3px 0px #000' }}
+                        style={isComic ? { boxShadow: '3px 3px 0px #000' } : {}}
                     >
-                        💾 SAVE CHANGES
+                        {isComic ? '💾 SAVE CHANGES' : '💾 Save Changes'}
                     </button>
                 </div>
             </div>
 
             {/* Right Panel - OUTPUT */}
-            <div className="w-64 bg-white flex-shrink-0 overflow-hidden">
+            <div className={styles.rightPanel}>
                 <NodeDataPanel 
                     node={node} 
                     type="output" 

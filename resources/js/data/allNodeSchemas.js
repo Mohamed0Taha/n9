@@ -2126,6 +2126,118 @@ const additionalSchemas = {
         showWhen: { operation: 'search' }
       }
     ]
+  },
+
+  'XML': {
+    category: 'Utilities',
+    fields: [
+      {
+        name: 'mode',
+        type: 'select',
+        label: 'Mode',
+        options: [
+          { value: 'jsonToXml', label: 'JSON to XML' },
+          { value: 'xmlToJson', label: 'XML to JSON' }
+        ],
+        default: 'xmlToJson',
+        required: true
+      },
+      {
+        name: 'property',
+        type: 'text',
+        label: 'Property Name',
+        placeholder: 'data',
+        required: true,
+        description: 'Name of the property to process'
+      }
+    ]
+  },
+
+  'JSON': {
+    category: 'Utilities',
+    fields: [
+      {
+        name: 'mode',
+        type: 'select',
+        label: 'Mode',
+        options: [
+          { value: 'stringToJson', label: 'String to JSON' },
+          { value: 'jsonToString', label: 'JSON to String' }
+        ],
+        default: 'stringToJson',
+        required: true
+      },
+      {
+        name: 'property',
+        type: 'text',
+        label: 'Property Name',
+        placeholder: 'data',
+        required: true
+      }
+    ]
+  },
+
+  'HTML Extract': {
+    category: 'Utilities',
+    fields: [
+      {
+        name: 'sourceData',
+        type: 'select',
+        label: 'Source Data',
+        options: [
+          { value: 'json', label: 'JSON Property' },
+          { value: 'binary', label: 'Binary File' }
+        ],
+        default: 'json'
+      },
+      {
+        name: 'property',
+        type: 'text',
+        label: 'Property Name',
+        placeholder: 'data',
+        required: true
+      },
+      {
+        name: 'extractionValues',
+        type: 'json',
+        label: 'Extraction Values (JSON)',
+        placeholder: '[{"key": "title", "cssSelector": "h1", "value": "text"}]',
+        description: 'Define what to extract using CSS selectors'
+      }
+    ]
+  },
+
+  'Compression': {
+    category: 'Utilities',
+    fields: [
+      {
+        name: 'operation',
+        type: 'select',
+        label: 'Operation',
+        options: [
+          { value: 'compress', label: 'Compress' },
+          { value: 'decompress', label: 'Decompress' }
+        ],
+        default: 'compress'
+      },
+      {
+        name: 'binaryProperty',
+        type: 'text',
+        label: 'Binary Property',
+        default: 'data',
+        required: true
+      },
+      {
+        name: 'format',
+        type: 'select',
+        label: 'Output Format',
+        options: [
+          { value: 'gzip', label: 'Gzip' },
+          { value: 'zip', label: 'Zip' }
+        ],
+        default: 'gzip'
+      }
+    ]
   }
 };
 
