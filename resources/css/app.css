@@ -10,6 +10,14 @@
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
+/*
+ * Global zoom: scale the entire app to 50% so the
+ * default view matches a browser zoom of 50%.
+ */
+html {
+    zoom: 0.5;
+}
+
 /* n8n-style custom styles */
 * {
     scrollbar-width: thin;
