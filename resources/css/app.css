@@ -178,6 +178,25 @@ select:focus-visible {
     animation: fadeIn 0.3s ease-out;
 }
 
+@keyframes fadeInUpSequential {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.suggestion-card {
+    opacity: 0;
+    animation-name: fadeInUpSequential;
+    animation-duration: 0.4s;
+    animation-timing-function: ease-out;
+    animation-fill-mode: forwards;
+}
+
 /* Glassmorphism effect */
 .glass {
     background: rgba(255, 255, 255, 0.7);
