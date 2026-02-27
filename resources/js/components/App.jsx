@@ -540,23 +540,25 @@ export default function App() {
             
             // Post-Generation Analysis
             const missing = findMissingNodeConfig(generatedGraph);
-            
-            if (missing.length > 0) {
-                setGenerateStatus({ state: 'success', message: 'Workflow generated! Please configure.' });
-                setDraft({ ...draft, description: prompt, graph: generatedGraph });
-                setCurrentGraph(generatedGraph);
-                handleGraphChange(generatedGraph);
-                
-                // Open panel and trigger collection
-                setIsPromptOpen(true);
-                setMissingNodeFields(missing);
-            } else {
-                setGenerateStatus({ state: 'success', message: 'Workflow generated!' });
-                setDraft({ ...draft, description: prompt, graph: generatedGraph });
-                setCurrentGraph(generatedGraph);
-                handleGraphChange(generatedGraph);
-                setMissingNodeFields([]);
-            }
+
+            // Store draft only – do not apply to canvas until user accepts
+            setDraft((prev) => ({
+                ...prev,
+                description: prompt,
+                graph: generatedGraph,
+            }));
+
+            setGenerateStatus({
+                state: 'success',
+                message:
+                    missing.length > 0
+                        ? 'Draft generated! Review configuration details below.'
+                        : 'Draft generated! Review and accept to apply.',
+            });
+
+            // Open panel and, if needed, trigger configuration collection
+            setIsPromptOpen(true);
+            setMissingNodeFields(missing);
         } catch (error) {
             setGenerateStatus({ state: 'error', message: 'Failed to generate workflow' });
             console.error(error);
@@ -564,7 +566,10 @@ export default function App() {
     };
 
     const handleConfigSubmit = (values) => {
-        const newGraph = { ...currentGraph };
+        const baseGraph = draft.graph || currentGraph;
+        if (!baseGraph) return;
+
+        const newGraph = { ...baseGraph };
         // Deep clone nodes to avoid mutation issues
         const newNodes = newGraph.nodes.map(n => ({ ...n, data: { ...n.data }, parameters: { ...(n.parameters || {}) } }));
         let modified = false;
@@ -605,9 +610,7 @@ export default function App() {
 
         if (modified) {
             const updatedGraph = { ...newGraph, nodes: newNodes };
-            setCurrentGraph(updatedGraph);
-            handleGraphChange(updatedGraph);
-            setDraft({ ...draft, graph: updatedGraph });
+            setDraft((prev) => ({ ...prev, graph: updatedGraph }));
         }
         
         setMissingNodeFields([]);
@@ -615,15 +618,24 @@ export default function App() {
 
     const handleAcceptDraft = async () => {
         try {
+            const graphToApply = draft.graph || currentGraph;
+            if (!graphToApply) return;
+
+            // Apply accepted draft to canvas and history
+            setCurrentGraph(graphToApply);
+            handleGraphChange(graphToApply);
+
             const { data } = await axios.post('/app/workflows', {
                 name: 'AI Generated Workflow',
                 description: draft.description,
-                graph: currentGraph,
+                graph: graphToApply,
             });
             
             setWorkflows([data.workflow, ...workflows]);
             setSelectedWorkflowId(data.workflow.id);
             setIsPromptOpen(false);
+            setMissingNodeFields([]);
+            setGenerateStatus({ state: 'idle', message: null });
         } catch (error) {
             console.error('Failed to save workflow', error);
         }

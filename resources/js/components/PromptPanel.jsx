@@ -392,7 +392,10 @@ export default function PromptPanel({
 
     return (
         <div className={containerClasses} style={containerStyle}>
-            <div className="w-full max-w-5xl pb-4 pointer-events-auto" style={{ maxHeight: isOpen ? '85vh' : 'auto' }}>
+            <div
+                className="w-full max-w-5xl pb-4 pointer-events-auto"
+                style={{ maxHeight: isOpen ? '85vh' : 'auto' }}
+            >
                 {/* Notch with Drawer Arrow */}
                 <div className="flex justify-center">
                     <button
@@ -434,11 +437,12 @@ export default function PromptPanel({
                         </div>
                     </button>
                     
-                    {isOpen && (
-                        <div
-                            className="p-8 overflow-y-auto"
-                            style={{ maxHeight: 'calc(85vh - 80px)' }}
-                        >
+                    <div
+                        className={`p-8 overflow-y-auto transition-all duration-500 ease-out ${
+                            isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                        }`}
+                        style={{ maxHeight: isOpen ? 'calc(85vh - 80px)' : 0 }}
+                    >
                             <form onSubmit={handleSubmit} className="space-y-6">
                                 
                                 {/* Instructions Box */}
@@ -484,7 +488,7 @@ export default function PromptPanel({
 
                                 {/* Dynamic Input Form */}
                                 {isCollecting && missingFields.length > 0 ? (
-                                    <div className="space-y-6 animate-fadeIn py-2">
+                                    <div className="space-y-6 py-2">
                                         <div className="flex gap-4 items-start">
                                             {/* AI Avatar */}
                                             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-xl shadow-md flex-shrink-0 border-2 border-white">
@@ -529,11 +533,16 @@ export default function PromptPanel({
                                                                 const nodeIcon = nodeGroup.nodeMetadata.icon;
                                                                 
                                                                 return (
-                                                                <div key={nodeId} className="border-4 rounded-xl p-4" style={{
-                                                                    borderColor: nodeColor,
-                                                                    backgroundColor: `${nodeColor}10`,
-                                                                    boxShadow: `0 0 0 2px ${nodeColor}40`
-                                                                }}>
+                                                                <div
+                                                                    key={nodeId}
+                                                                    className="border-4 rounded-xl p-4 suggestion-card"
+                                                                    style={{
+                                                                        borderColor: nodeColor,
+                                                                        backgroundColor: `${nodeColor}10`,
+                                                                        boxShadow: `0 0 0 2px ${nodeColor}40`,
+                                                                        animationDelay: `${nodeIdx * 120}ms`,
+                                                                    }}
+                                                                >
                                                                 {/* Node Header with node-specific color and icon */}
                                                                 <div className="mb-4 pb-3 border-b-3" style={{
                                                                     borderColor: nodeColor
