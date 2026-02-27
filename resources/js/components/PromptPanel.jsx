@@ -392,7 +392,7 @@ export default function PromptPanel({
 
     return (
         <div className={containerClasses} style={containerStyle}>
-            <div className="w-full max-w-5xl pb-4 pointer-events-auto" style={{ maxHeight: isOpen ? '85vh' : 'auto', overflowY: isOpen ? 'auto' : 'visible' }}>
+            <div className="w-full max-w-5xl pb-4 pointer-events-auto" style={{ maxHeight: isOpen ? '85vh' : 'auto' }}>
                 {/* Notch with Drawer Arrow */}
                 <div className="flex justify-center">
                     <button
@@ -435,7 +435,10 @@ export default function PromptPanel({
                     </button>
                     
                     {isOpen && (
-                        <div className="p-8">
+                        <div
+                            className="p-8 overflow-y-auto"
+                            style={{ maxHeight: 'calc(85vh - 80px)' }}
+                        >
                             <form onSubmit={handleSubmit} className="space-y-6">
                                 
                                 {/* Instructions Box */}
