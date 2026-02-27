@@ -1312,7 +1312,7 @@ function WorkflowCanvas(
         snapToGrid={true}
         snapGrid={[15, 15]}
         defaultEdgeOptions={edgeOptions}
-        defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
+        defaultViewport={{ x: 0, y: 0, zoom: 0.5 }}
         connectionRadius={10}
         multiSelectionKeyCode="Shift"
         selectionKeyCode="Shift"
